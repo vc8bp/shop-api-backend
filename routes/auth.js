@@ -8,10 +8,7 @@ const jwt = require("jsonwebtoken");
 router.post("/register", async (req, res) => {
   if (req.body.password.length < 5 || req.body.password.length > 10 ) {
       return res.status(400).json({ error: "password length should be in range of 5 to 10 charecter"})
-  }
-  if (req.body.number.length <= 10){
-    return res.status(400).json({ error: "this is not a valid phone number"})
-  }
+  };
   const newUser = new User({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
