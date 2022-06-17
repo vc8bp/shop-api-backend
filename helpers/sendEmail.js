@@ -10,15 +10,12 @@ const sendEmail = (options) => {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD,
     },
+    from: process.env.EMAIL_USERNAME
   });
 
-  transporter.verify((err, success) => {
-    if (err) console.error(err);
-    console.log('Your config is correct');
-    });
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
+    from: `my Comany <${process.env.EMAIL_FROM}>`,
     to: options.to,
     subject: options.subject,
     html: options.emailhtml,

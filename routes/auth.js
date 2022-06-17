@@ -127,7 +127,7 @@ router.put("/forgotpass/:id", async (req, res)=> {
     `
     try {
       sendEmail({
-        to: "vc8bp3@gmail.com",
+        to: user.email,
         subject: "Forgot Password",
         emailhtml: emailhtml,
         emailtext: emailtext
