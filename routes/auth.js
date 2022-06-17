@@ -89,11 +89,13 @@ router.post("/login", async (req, res) => {
 })
 
 
-router.put("/forgotpass/:id", async (req, res)=> {
+router.put("/forgotpass", async (req, res)=> {
   const resetToken = crypto.randomBytes(20).toString('hex');
   const hashedresetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-  const expireDate = Date.now() + (10 * 6000);
+  const expireDate = Date.now() + (10 * 60000);
   const email = req.body.email;
+  console.log(Date.now())
+  console.log(expireDate)
 
   if(!email) {
     return res.status(400).json({error: "please provide a email"});
@@ -114,7 +116,7 @@ router.put("/forgotpass/:id", async (req, res)=> {
     
 
     //sending email thing
-    const resetURl = `https://localhost:5000/${hashedresetPasswordToken}`
+    const resetURl = `https://localhost:5000/${resetToken}`
     const emailhtml = `
       <h1>you have requested a password reset</h1>
       <p>please go tho this link to reset password</p>
@@ -147,8 +149,46 @@ router.put("/forgotpass/:id", async (req, res)=> {
 
 
   } catch (error) {
-    res.status(500).json(error)
+    return res.status(500).json(error)
   }
+})
+
+router.post("/resetpassword/:resetToken", async (req,res) => {
+  const hashedresetPasswordToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
+  try {
+
+    //validating if this token is valid or not
+    const user = await User.findOne({
+      resetPasswordToken: hashedresetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() } // gt is mongodb query it means greater then 
+    })
+
+    if(!user) {
+      return res.status(400).json({ error: "Invalid reset token"})
+    }
+
+
+    //checking if user is entering his old password
+    // const oldPassword = req.body.password
+    // const newPassword = cryptoJS.AES.encrypt(req.body.password, process.env.CRYPTOJS_SECRET_KEY.toString());
+    // if(oldPassword === newPassword) {
+    //   return res.status(401).json({error: "you can not add your current password"})
+    // }
+    
+
+
+    //setting saving new password to mongodb
+    user.password = newPassword;
+    //user.resetPasswordToken = undefined;
+    //user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({data: "password sucessfully changed"})
+
+  } catch (error) {
+    return res.status(500).json({error: "Internal server error"})
+  }
+
 })
 
 
