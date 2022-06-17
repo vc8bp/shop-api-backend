@@ -2,13 +2,16 @@ const router = require("express").Router();
 const User = require("../models/user");
 const cryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto')
+const sendEmail = require('../helpers/sendEmail')
+
 
 
 //Register
 router.post("/register", async (req, res) => {
   if (req.body.password.length < 5 || req.body.password.length > 10 ) {
       return res.status(400).json({ error: "password length should be in range of 5 to 10 charecter"})
-  }
+  };
   const newUser = new User({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -82,6 +85,69 @@ router.post("/login", async (req, res) => {
       error: "Internal server error",
     });
     
+  }
+})
+
+
+router.put("/forgotpass/:id", async (req, res)=> {
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  const hashedresetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  const expireDate = Date.now() + (10 * 6000);
+  const email = req.body.email;
+
+  if(!email) {
+    return res.status(400).json({error: "please provide a email"});
+  }
+  try {
+    
+
+    //finding if user and updating it
+    const user = await User.findOneAndUpdate({email: email}, {
+      resetPasswordToken: hashedresetPasswordToken,
+      resetPasswordExpire: expireDate
+    });
+
+    console.log(`user: ${user}`)
+    if(!user) {
+      return res.status(401).json({ error: "user with this email not exist"});
+    };
+    
+
+    //sending email thing
+    const resetURl = `https://localhost:5000/${hashedresetPasswordToken}`
+    const emailhtml = `
+      <h1>you have requested a password reset</h1>
+      <p>please go tho this link to reset password</p>
+      <a href=${resetURl}>${resetURl}</a>
+    `
+    const emailtext = `
+      you have requested a password reset
+      please go tho this link to reset password
+      ${resetURl}
+    `
+    try {
+      sendEmail({
+        to: "vc8bp3@gmail.com",
+        subject: "Forgot Password",
+        emailhtml: emailhtml,
+        emailtext: emailtext
+      })
+
+
+    } catch (error) {
+      //removing users reset token if its not valid
+      await User.findOneAndUpdate({email: email}, {
+        resetPasswordToken: undefined,
+        resetPasswordExpire: undefined
+      });
+      console.log(error)
+      return res.status(401).json({error: "Failed to send email"})
+    }
+    res.status(200).json("Email send Sucessfully")
+
+
+  } catch (error) {
+    res.status(500).json(error)
   }
 })
 

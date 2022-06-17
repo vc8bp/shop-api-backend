@@ -1,7 +1,6 @@
 const dotenv = require("dotenv");
 dotenv.config();
 const express = require("express");
-const { required } = require("nodemon/lib/config");
 const connectToMongo = require("./db");
 var cors = require('cors');
 const app = express();

@@ -33,6 +33,10 @@ const mongoose = require('mongoose');
       default: false,
     },
 
+    //reset password things
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+
   },{timestamps: true});
   const User = mongoose.model('user', UserSchema)
   module.exports = User
