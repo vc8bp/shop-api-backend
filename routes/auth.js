@@ -115,7 +115,8 @@ router.post("/forgotpass", async (req, res)=> {
     };
   
     //sending email thing
-    const resetURl = `http://localhost:3000/resetpassword/${resetToken}`
+    const resetURl = `https://satnamcreation.netlify.app/resetpassword/${resetToken}`
+    console.log(resetToken)
     const emailhtml = `
       <h1>you have requested a password reset</h1>
       <p>please go tho this link to reset password</p>

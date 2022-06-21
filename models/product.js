@@ -7,7 +7,7 @@ const { Schema } = mongoose;
     //     ref: 'user',
 
     //   },
-
+ 
     //type: Schema.Types.Mixed(to all charactors but requie also)    
 
     title: { type: String, required: true },

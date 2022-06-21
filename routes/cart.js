@@ -7,11 +7,11 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 router.post("/", verifyToken, async (req, res) => {
     const newCart = new cart(req.body);
-          //BUG
-    //crate index of product no work left to do
+
     try {
       const savedCart = await newCart.save();
       res.status(200).json(savedCart);
+      console.log("product added")
     } catch (err) {
       res.status(500).json(err);
     }
@@ -48,7 +48,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
   router.get("/info/:userId", async (req, res) => {
 
     try {
-      const cart = await Product.findOne({userId: req.params.userId});
+      const cart = await Cart.findOne({userId: req.params.userId});
       res.status(200).json(cart)
     } catch (err) {
       res.status(500).json(err);
