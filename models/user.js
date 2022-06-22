@@ -32,6 +32,10 @@ const mongoose = require('mongoose');
       type: Boolean,
       default: false,
     },
+    userIP: {
+      type: String,
+      required:true
+    },
 
     //reset password things
     resetPasswordToken: String,

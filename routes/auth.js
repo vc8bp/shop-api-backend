@@ -19,6 +19,7 @@ router.post("/register", async (req, res) => {
     email: req.body.email,
     number: req.body.number,
     password: cryptoJS.AES.encrypt(req.body.password, process.env.CRYPTOJS_SECRET_KEY.toString()),
+    userIP: req.body.userIP
   });
   try {
     const saveduser = await newUser.save();
@@ -54,7 +55,7 @@ router.post("/register", async (req, res) => {
 //login
 router.post("/login", async (req, res) => {
 
-  
+  console.log(req.body)
   if(!req.body.email || !req.body.password) {
     return res.status(400).json({error: "please provide email and password"})
   }
@@ -72,7 +73,7 @@ router.post("/login", async (req, res) => {
       if(pass !== req.body.password) {
         return res.status(401).json({error: "wrong credentials"}) 
       }
-
+      
       const accessToken = jwt.sign({
         id:user._id, 
         isAdmin: user.isAdmin,
@@ -97,6 +98,8 @@ router.post("/forgotpass", async (req, res)=> {
   const hashedresetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   const expireDate = Date.now() + (10 * 60000);
   const email = req.body.email;
+  console.log(resetToken)
+  console.log(hashedresetPasswordToken);
 
   if(!email) {
     return res.status(400).json({error: "please provide a email"});
@@ -116,7 +119,7 @@ router.post("/forgotpass", async (req, res)=> {
   
     //sending email thing
     const resetURl = `https://satnamcreation.netlify.app/resetpassword/${resetToken}`
-    console.log(resetToken)
+    
     const emailhtml = `
       <h1>you have requested a password reset</h1>
       <p>please go tho this link to reset password</p>
