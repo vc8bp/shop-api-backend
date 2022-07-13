@@ -36,6 +36,11 @@ const mongoose = require('mongoose');
       type: String,
     },
 
+    //2fa
+    mfa: { type: Boolean, default: false},
+    otp: Number,
+    otpExpire: Date,
+
     //reset password things
     resetPasswordToken: String,
     resetPasswordExpire: Date,
