@@ -15,11 +15,7 @@ router.post("/", verifyToken, async (req, res) => {
       
         if(cart?.userID === req.body.userID) {
           console.log("user cart exist")
-          // for(let i in cart.products) {
-          //   if(cart.products[i].productID === req.body.products[0].productID){
-          //         dublicate = true
-          //       }
-          // }
+          
           let itemIndex = cart.products.findIndex(p => p.productID === req.body.products[0].productID);
           console.log(`dublicate index : ${itemIndex}`)
           
@@ -28,11 +24,7 @@ router.post("/", verifyToken, async (req, res) => {
           console.log("product is dublicate")
           console.log(req.body.products[0].productID)
 
-          // const updatedCart = await Cart.findOneAndUpdate({userID: req.body.userID, "products.$.productID": req.body.products[0].productID },
-          // {$set: {"products.$.quantity" : 100}}
-          // )
-          // console.log(updatedCart)
-
+         
 
           let productItem = cart.products[itemIndex];
           const newQuantity = parseInt(productItem.quantity) + parseInt(req.body.products[0].quantity);
