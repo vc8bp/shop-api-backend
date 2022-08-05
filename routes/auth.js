@@ -63,7 +63,7 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({email: req.body.email});
       if (!user) {
-        return res.status(401).json({error: "wrong credentials"})
+        return res.status(401).json({error: "user with this emil dosent exist"})
       } 
       //matching pass
       const hashedpass = await cryptoJS.AES.decrypt(user.password, process.env.CRYPTOJS_SECRET_KEY);
@@ -101,9 +101,7 @@ router.post("/forgotpass", async (req, res)=> {
   console.log(resetToken)
   console.log(hashedresetPasswordToken);
 
-  if(!email) {
-    return res.status(400).json({error: "please provide a email"});
-  }
+  if(!email) return res.status(400).json({error: "please provide a email"});
   try {
     
 
@@ -113,9 +111,7 @@ router.post("/forgotpass", async (req, res)=> {
       resetPasswordExpire: expireDate
     });
 
-    if(!user) {
-      return res.status(401).json({ error: "user with this email not exist"});
-    };
+    if(!user) return res.status(401).json({ error: "user with this email not exist"});
   
     //sending email thing
     const resetURl = `https://satnamcreation.netlify.app/resetpassword/${resetToken}`
@@ -170,9 +166,8 @@ router.post("/resetpassword/:resetToken", async (req,res) => {
       resetPasswordExpire: { $gt: Date.now() } // gt is mongodb query it means greater then 
     })
 
-    if(!user) {
-      return res.status(400).json({ error: "Invalid reset token"})
-    }
+    if(!user) return res.status(400).json({ error: "Invalid reset token"});
+    
     
     //checking if user is entering his old password
     const oldPassHAsh = cryptoJS.AES.decrypt(user.password, process.env.CRYPTOJS_SECRET_KEY);

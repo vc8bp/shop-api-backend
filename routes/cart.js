@@ -4,16 +4,16 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 //add new product to cart req: login
 
-router.post("/", verifyToken, async (req, res) => {
+router.post("/:id", verifyUserWithToken, async (req, res) => {
     //const newCart = new cart(req.body);
-
     try {
-      const cart = await Cart.findOne({userID: req.body.userID})
-      console.log(`userID : ${req.body.userID}`)
+      const cart = await Cart.findOne({userID: req.user.id})
+      console.log(`userID : ${req.user.id}`)
+      console.log(`userID : ${req.user.id}`)
       console.log(cart)
       
       
-        if(cart?.userID === req.body.userID) {
+        if(cart?.userID === req.user.id) {
           console.log("user cart exist")
           
           let itemIndex = cart.products.findIndex(p => p.productID === req.body.products[0].productID);
@@ -40,7 +40,7 @@ router.post("/", verifyToken, async (req, res) => {
         } else {
           console.log("product is not dublicate")
           console.log(req.body.products[0].productID)
-          const updatedCart = await Cart.findOneAndUpdate({userID: req.body.userID}, {
+          const updatedCart = await Cart.findOneAndUpdate({userID: req.user.id}, {
             
             $push: {
               products: {
@@ -53,14 +53,14 @@ router.post("/", verifyToken, async (req, res) => {
                 quantity: req.body.products[0].quantity
               }
             }
-          })
+          },{new: true})
 
           res.status(200).json(updatedCart)
         }
  
       } else {
         console.log("product added")
-        const newCart = Cart(req.body);
+        const newCart = Cart({...req.body, userID: req.user.id});
         const savedCart = await newCart.save();
         res.status(200).json(savedCart);
         console.log("product added")
@@ -72,6 +72,16 @@ router.post("/", verifyToken, async (req, res) => {
     }
   });
 
+//get cart size
+router.get('/size/:id',verifyUserWithToken,async (req, res)=>{
+    
+    const cart = await Cart.findOne({userID: req.user.id});
+    if(!cart) return res.status(200).json(0)
+
+    const cartLength = cart.products?.length;  
+    return res.status(200).json(cartLength);
+
+})
 
 //update products cart
 router.put("/:id", verifyUserWithToken, async (req,res) => {
@@ -83,8 +93,7 @@ router.put("/:id", verifyUserWithToken, async (req,res) => {
         res.status(200).json(uodatecart);
     } catch (error) {
         res.status(400).json(error);
-    }
-    
+    }   
 })
 
 //delete product from cart req:login
@@ -93,6 +102,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
     try {
       await cart.findByIdAndDelete(req.params.id);
       res.status(200).json("cart deleted")
+      
     } catch (err) {
       res.status(500).json(err);
     }
@@ -106,6 +116,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
     try {
       const cart = await Cart.findOne({userId: req.params.userId});
       res.status(200).json(cart)
+      
     } catch (err) {
       res.status(500).json(err);
     }
