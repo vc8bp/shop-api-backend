@@ -40,7 +40,7 @@ router.get("/info/:id", verifyAdminWithToken, async (req, res) => {
   }
 });
 
-//get specific user info, req:admin login
+//get all user info, req:admin login
 router.get("/allinfo", verifyAdminWithToken, async (req, res) => {
   query = req.query.limit
   try {

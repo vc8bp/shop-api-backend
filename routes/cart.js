@@ -97,13 +97,14 @@ router.put("/:id", verifyUserWithToken, async (req,res) => {
 })
 
 //delete product from cart req:login
-router.delete("/:id", verifyUserWithToken, async (req, res) => {
+router.delete("/:id/:productID", verifyUserWithToken, async (req, res) => {
   
     try {
-      await cart.findByIdAndDelete(req.params.id);
-      res.status(200).json("cart deleted")
+      await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.productID}}})
+      res.status(200).json("cart deleted");
       
     } catch (err) {
+      console.log(err)
       res.status(500).json(err);
     }
   });
