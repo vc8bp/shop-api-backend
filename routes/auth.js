@@ -80,7 +80,7 @@ router.post("/login", async (req, res) => {
 
       }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.JWT_SECRET_EXPIRE || "3d"});
 
-      const {password, ...others} = user._doc
+      const {password,resetPasswordToken,resetPasswordExpire, ...others} = user._doc
       res.status(200).json({...others, accessToken})
     
   } catch (err) {

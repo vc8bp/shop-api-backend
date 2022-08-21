@@ -14,6 +14,10 @@ const mongoose = require('mongoose');
       minlength: [2, "Last name minimum length should be 2 char"],
       maxlength: [10, "Last name maximum length should be 10 char"],
     },
+    avatar: {
+      type: String,
+      default: "https://w7.pngwing.com/pngs/867/694/png-transparent-user-profile-default-computer-icons-network-video-recorder-avatar-cartoon-maker-blue-text-logo.png"
+    },
     email: {
         type: String,
         required: true,
