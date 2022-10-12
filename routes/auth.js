@@ -65,6 +65,15 @@ router.post("/login", async (req, res) => {
       if (!user) {
         return res.status(401).json({error: "user with this emil dosent exist"})
       } 
+      
+      //checking if this login req is for admin
+      if(req.body.forAdmin) {
+        if (!user.isAdmin) {
+          console.log("he is not admin");
+          return res.status(401).json({error: "wrong credentials"}) 
+        }
+      }
+
       //matching pass
       const hashedpass = await cryptoJS.AES.decrypt(user.password, process.env.CRYPTOJS_SECRET_KEY);
       const pass = await hashedpass.toString(cryptoJS.enc.Utf8);
@@ -79,7 +88,7 @@ router.post("/login", async (req, res) => {
         isAdmin: user.isAdmin,
 
       }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.JWT_SECRET_EXPIRE || "3d"});
-
+      
       const {password,resetPasswordToken,resetPasswordExpire, ...others} = user._doc
       res.status(200).json({...others, accessToken})
     
