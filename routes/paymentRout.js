@@ -2,7 +2,8 @@ const router = require("express").Router();
 const Razorpay = require("razorpay")
 const dotenv = require("dotenv");
 const crypto = require("crypto")
-const product = require("../models/product")
+const product = require("../models/product");
+const order = require("../models/order");
 
 dotenv.config();
 
@@ -13,7 +14,9 @@ const instance = new Razorpay({
 
 router.post("/checkout", async (req,res) => {
     const dbproduct = await product.findById(req.body.productID);
-    price = dbproduct.price * req.body.quentity;
+    price = dbproduct.price * req.body.quantity;
+    console.log(dbproduct)
+
     const options = {
         amount: Number(price * 100),  // amount in the smallest currency unit
         currency: "INR",
@@ -23,6 +26,18 @@ router.post("/checkout", async (req,res) => {
     try {
       const response = await instance.orders.create(options)
       console.log(response)
+      const dbOrder = order.create({
+        userID: req.body.user,
+        products: {
+          productID :req.body.productID,
+          quantity: req.body.quantity,
+          size: req.body.size,
+          color: req.body.color
+        },
+        price: price,
+        address: {address: "empty"},
+        order: response,
+      })
       res.json({
         order:{
           id: response.id,
@@ -49,6 +64,14 @@ router.post("/paymentVerify", async (req,res) => {
 
   if(expectedSignature === razorpay_signature) {
     //return res.status(200).json({success: true});  
+    try {
+      const dborder = await order.findOneAndUpdate({"order.id": razorpay_order_id},{
+        paymentStatus : true
+      })
+      console.log("saved successfuly")
+    } catch (error) {
+      console.log(error)
+    }
     return res.redirect(`${process.env.BACE_FRONTEND_URL}/paymentsuccess?refrence=${razorpay_payment_id}`);
   } else {
     return res.status(400).json({success: false});  

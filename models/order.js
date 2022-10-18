@@ -7,12 +7,15 @@ const { Schema } = mongoose;
     products: [
         {
             productID: {type: String},
-            quantity: {type: Number, default: 1}
+            quantity: {type: Number, default: 1},
+            size: {type: String},
+            color: {type: String}
         }
     ],
     price: {type: Number, required: true},
     address: {type: Object, required: true},
-    status: {type: String, default: "panding"},
+    order: {type: Object, required: true},
+    paymentStatus: {type: Boolean, default: false}
   },{timestamps: true}
   );
 
