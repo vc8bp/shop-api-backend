@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const crypto = require("crypto")
 const product = require("../models/product");
 const order = require("../models/order");
+const ConfirmOrders = require("../models/ConfirmOrders");
 
 dotenv.config();
 
@@ -60,22 +61,20 @@ router.post("/paymentVerify", async (req,res) => {
                                   .digest('hex');
                                   console.log("sig received " ,razorpay_signature);
                                   console.log("sig generated " ,expectedSignature);
-  const response = {"signatureIsValid":"false"}
-
-  if(expectedSignature === razorpay_signature) {
+  if(expectedSignature === "hemlooo") {
     //return res.status(200).json({success: true});  
     try {
-      const dborder = await order.findOneAndUpdate({"order.id": razorpay_order_id},{
-        paymentStatus : true
-      })
+      const dborder = await order.findOneAndDelete({"order.id": razorpay_order_id})
+      if(!dborder) return res.status(400).json({error: "sesson timeout"})
+      const data = {...dborder._doc, paymentStatus: true, }
+      await ConfirmOrders.create(data)
       console.log("saved successfuly")
     } catch (error) {
       console.log(error)
     }
     return res.redirect(`${process.env.BACE_FRONTEND_URL}/paymentsuccess?refrence=${razorpay_payment_id}`);
   } else {
-    return res.status(400).json({success: false});  
-
+    return res.status(400).json({success: false, signatureIsValid: false});  
   }
       
 })
