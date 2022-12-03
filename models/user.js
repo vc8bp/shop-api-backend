@@ -38,7 +38,7 @@ const mongoose = require('mongoose');
     },
     userIP: {
       type: String,
-    },
+    },  
 
     //2fa
     mfa: { type: Boolean, default: false},
