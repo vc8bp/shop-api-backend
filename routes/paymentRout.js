@@ -61,7 +61,7 @@ router.post("/paymentVerify", async (req,res) => {
                                   .digest('hex');
                                   console.log("sig received " ,razorpay_signature);
                                   console.log("sig generated " ,expectedSignature);
-  if(expectedSignature === "hemlooo") {
+  if(expectedSignature === razorpay_signature) {
     //return res.status(200).json({success: true});  
     try {
       const dborder = await order.findOneAndDelete({"order.id": razorpay_order_id})
