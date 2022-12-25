@@ -8,62 +8,46 @@ router.post("/:id", verifyUserWithToken, async (req, res) => {
     //const newCart = new cart(req.body);
     try {
       const cart = await Cart.findOne({userID: req.user.id})
-      console.log(`userID : ${req.user.id}`)
-      console.log(`userID : ${req.user.id}`)
-      console.log(cart)
-      
-      
-        if(cart?.userID === req.user.id) {
+
+        //if that user cart exist
+        if(cart) {
           console.log("user cart exist")
           
           let itemIndex = cart.products.findIndex(p => p.productID === req.body.products[0].productID);
           console.log(`dublicate index : ${itemIndex}`)
           
-      
-        if(itemIndex > -1) {
-          console.log("product is dublicate")
-          console.log(req.body.products[0].productID)
+          //if that product axist on cart.
+          if(itemIndex > -1) {
+            console.log("product is dublicate")
 
-         
+            let productItem = cart.products[itemIndex];
+            const newQuantity = parseInt(productItem.quantity) + parseInt(req.body.products[0].quantity);
+            productItem.quantity = newQuantity;
+            cart.products[itemIndex] = productItem;
 
-          let productItem = cart.products[itemIndex];
-          const newQuantity = parseInt(productItem.quantity) + parseInt(req.body.products[0].quantity);
-          productItem.quantity = newQuantity;
-          cart.products[itemIndex] = productItem;
-
-          savedCart = await cart.save();
-          
-
-          res.status(200).json(savedCart)
-          console.log("cart updated");
-          
+            savedCart = await cart.save();
+            
+            console.log("cart updated");
+            return res.status(200).json(savedCart)
+            
+        // if user cart dosent have that product
         } else {
           console.log("product is not dublicate")
-          console.log(req.body.products[0].productID)
-          const updatedCart = await Cart.findOneAndUpdate({userID: req.user.id}, {
-            
+          const updatedCart = await Cart.findOneAndUpdate({userID: req.user.id}, { //pushing new product to array
             $push: {
-              products: {
-                productID: req.body.products[0].productID,
-                title: req.body.products[0].title,
-                img: req.body.products[0].img,
-                size: req.body.products[0].size,
-                color: req.body.products[0].color,
-                price: req.body.products[0].price,
-                quantity: req.body.products[0].quantity
-              }
+              products: req.body.products
             }
           },{new: true})
 
-          res.status(200).json(updatedCart)
+          return res.status(200).json(updatedCart)
         }
  
       } else {
         console.log("product added")
         const newCart = Cart({...req.body, userID: req.user.id});
         const savedCart = await newCart.save();
-        res.status(200).json(savedCart);
         console.log("product added")
+        return res.status(200).json(savedCart);
 
       }
     } catch (err) {
@@ -112,13 +96,47 @@ router.delete("/:id/:productID", verifyUserWithToken, async (req, res) => {
   
   
   //get user cart
-  router.get("/info/:userId", async (req, res) => {
-
+  router.get("/info/:userId", verifyUserWithToken, async (req, res) => {
+    console.log(req.user.id)
     try {
-      const cart = await Cart.findOne({userId: req.params.userId});
-      res.status(200).json(cart)
+      const cart = await Cart.aggregate([
+        {$match: {userID: req.user.id}},
+        {
+          $lookup: {
+            from: "products",
+            localField: "products.productID",
+            foreignField: "productno",
+            as: "productInfo"
+          }
+        },
+
+        {
+          $project: {
+            userID: 1,
+            products: 1,
+            productInfo: {
+              title: 1,
+              productno: 1,
+              desc: 1,
+              img: 1,
+              price: 1,
+            }
+          }
+        },
+        
+      ]);
+      const [cartt] = cart; //removing array brackets
+
+      const margedProducts = []        
+      cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
+        const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
+        margedProducts.push({ ...product, ...productInfo });
+      })
+  
+      res.status(200).json({userID: req.user.id, cartID: cartt._id, products: margedProducts})
       
     } catch (err) {
+      console.log(err)
       res.status(500).json(err);
     }
   });
