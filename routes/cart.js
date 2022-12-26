@@ -4,7 +4,7 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 //add new product to cart req: login
 
-router.post("/:id", verifyUserWithToken, async (req, res) => {
+router.post("/", verifyUserWithToken, async (req, res) => {
     //const newCart = new cart(req.body);
     try {
       const cart = await Cart.findOne({userID: req.user.id})
@@ -81,10 +81,10 @@ router.put("/:id", verifyUserWithToken, async (req,res) => {
 })
 
 //delete product from cart req:login
-router.delete("/:id/:productID", verifyUserWithToken, async (req, res) => {
-  
+router.delete("/:id", verifyUserWithToken, async (req, res) => {
+    console.log(req.params.id)
     try {
-      await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.productID}}})
+      await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.id}}})
       res.status(200).json("cart deleted");
       
     } catch (err) {
@@ -117,6 +117,7 @@ router.delete("/:id/:productID", verifyUserWithToken, async (req, res) => {
             productInfo: {
               title: 1,
               productno: 1,
+              _id: 1,
               desc: 1,
               img: 1,
               price: 1,
@@ -125,7 +126,11 @@ router.delete("/:id/:productID", verifyUserWithToken, async (req, res) => {
         },
         
       ]);
+      if(!cart.length) {
+        return res.status(200).json({success: true, message: "no proucts foound"})
+      }
       const [cartt] = cart; //removing array brackets
+      console.log(cart)
 
       const margedProducts = []        
       cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
