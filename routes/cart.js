@@ -18,28 +18,26 @@ router.post("/", verifyUserWithToken, async (req, res) => {
           
           //if that product axist on cart.
           if(itemIndex > -1) {
-            console.log("product is dublicate")
-
             let productItem = cart.products[itemIndex];
             const newQuantity = parseInt(productItem.quantity) + parseInt(req.body.products[0].quantity);
             productItem.quantity = newQuantity;
             cart.products[itemIndex] = productItem;
 
-            savedCart = await cart.save();
+            await cart.save();
             
             console.log("cart updated");
-            return res.status(200).json(savedCart)
+            return res.status(200).json({status: "success", productExisted: true})
             
         // if user cart dosent have that product
         } else {
           console.log("product is not dublicate")
-          const updatedCart = await Cart.findOneAndUpdate({userID: req.user.id}, { //pushing new product to array
+          await Cart.findOneAndUpdate({userID: req.user.id}, { //pushing new product to array
             $push: {
               products: req.body.products
             }
           },{new: true})
 
-          return res.status(200).json(updatedCart)
+          return res.status(200).json({status: "success", productExisted: false})
         }
  
       } else {
@@ -47,7 +45,7 @@ router.post("/", verifyUserWithToken, async (req, res) => {
         const newCart = Cart({...req.body, userID: req.user.id});
         const savedCart = await newCart.save();
         console.log("product added")
-        return res.status(200).json(savedCart);
+        return res.status(200).json({status: "success", productExisted: false})
 
       }
     } catch (err) {
@@ -57,30 +55,42 @@ router.post("/", verifyUserWithToken, async (req, res) => {
   });
 
 //get cart size
-router.get('/size/:id',verifyUserWithToken,async (req, res)=>{
-    
-    const cart = await Cart.findOne({userID: req.user.id});
-    if(!cart) return res.status(200).json(0)
-
-    const cartLength = cart.products?.length;  
-    return res.status(200).json(cartLength);
-
-})
-
-//update products cart
-router.put("/:id", verifyUserWithToken, async (req,res) => {
-
+router.get('/size',verifyUserWithToken,async (req, res)=>{
     try {
-        const uodatecart = await Cart.findByIdAndUpdate(req.params.id, {
-            $set: req.body
-        },{new: true})
-        res.status(200).json(uodatecart);
+      const cartSize = await Cart.aggregate([
+        {$match: {userID: req.user.id}},
+        {$addFields: {
+            size : {$size: "$products"}
+        }},
+        {$project: {size: 1, _id: 0}}
+      ]);
+      const [ removedArrayBrackets ] = cartSize
+      res.status(200).json(removedArrayBrackets)
+
+      
     } catch (error) {
-        res.status(400).json(error);
-    }   
+      console.log(error)
+      res.status(500).json("internal server error")
+    }
+    
+
+
 })
 
-//delete product from cart req:login
+//update products Quantity in cart
+router.put("/updatequantity/:productNumber/:newQuantity", verifyUserWithToken, async (req,res) => {
+    try {
+      const cart = await Cart.update(
+        {userID: req.user.id, "products.productID": req.params.productNumber},
+        {$set: {"products.$.quantity": req.params.newQuantity}}
+      )
+      res.status(200).json(cart)
+    } catch (error) {
+      console.log(error)
+    }
+})
+
+
 router.delete("/:id", verifyUserWithToken, async (req, res) => {
     console.log(req.params.id)
     try {
