@@ -2,9 +2,11 @@ const router = require("express").Router();
 const Razorpay = require("razorpay")
 const dotenv = require("dotenv");
 const crypto = require("crypto")
-const product = require("../models/product");
-const order = require("../models/order");
+const Product = require("../models/product");
+const Order = require("../models/order");
+const Cart = require('../models/cart.js')
 const ConfirmOrders = require("../models/ConfirmOrders");
+const { verifyUserWithToken } = require("./tokenVerify");
 
 dotenv.config();
 
@@ -13,10 +15,57 @@ const instance = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
-router.post("/checkout", async (req,res) => {
-    const dbproduct = await product.findById(req.body.productID);
-    price = dbproduct.price * req.body.quantity;
-    console.log(dbproduct)
+router.post("/checkout", verifyUserWithToken , async (req,res) => {
+    let price = undefined
+    let cart = undefined
+    const margedProducts = []   
+
+
+    if(req.body.type === "product"){ //if req is for single product
+      const dbproduct = await Product.findById(req.body.product.productID);
+      price = dbproduct.price * req.body.product.quantity;
+    
+
+    } else if(req.body.type === "cart"){ //if req is for whole cart
+      cart = await Cart.aggregate([
+        {$match: {userID: req.user.id}},
+        {
+          $lookup: {
+            from: "products",
+            localField: "products.productID",
+            foreignField: "productno",
+            as: "productInfo"
+          }
+        },
+        {
+          $project: {
+            userID: 1,
+            products: { productID: 1,size: 1, color: 1, quantity: 1},
+            productInfo: {
+              productno: 1,
+              _id: 1,
+              price: 1,
+            }
+          }
+        },
+        
+      ]);
+
+      const [cartt] = cart; //removing array brackets
+  
+      
+      cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
+        const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
+        margedProducts.push({ ...product, ...productInfo });
+      })
+      
+      //calculationg total price
+      price = await margedProducts?.reduce((total, item) => {
+        return total + (item.price * item.quantity)
+      },0)
+      console.log({price})
+    }
+    
 
     const options = {
         amount: Number(price * 100),  // amount in the smallest currency unit
@@ -27,14 +76,10 @@ router.post("/checkout", async (req,res) => {
     try {
       const response = await instance.orders.create(options)
       console.log(response)
-      const dbOrder = order.create({
-        userID: req.body.user,
-        products: {
-          productID :req.body.productID,
-          quantity: req.body.quantity,
-          size: req.body.size,
-          color: req.body.color
-        },
+      const dbOrder = await Order.create({
+        userID: req.user.id,
+        type: req.body.type,  // is it cart payment or a single product payment
+        products: req.body.product || margedProducts,
         price: price,
         address: {address: "empty"},
         order: response,
@@ -53,7 +98,8 @@ router.post("/checkout", async (req,res) => {
 
 router.post("/paymentVerify", async (req,res) => {
   const {razorpay_order_id,razorpay_payment_id,razorpay_signature  } = req.body;
-  const body=razorpay_order_id + "|" + razorpay_payment_id;
+  console.log(req.body)
+  const body = razorpay_order_id + "|" + razorpay_payment_id;
 
   const crypto = require("crypto");
   const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -64,13 +110,19 @@ router.post("/paymentVerify", async (req,res) => {
   if(expectedSignature === razorpay_signature) {
     //return res.status(200).json({success: true});  
     try {
-      const dborder = await order.findOneAndDelete({"order.id": razorpay_order_id})
+      const dborder = await Order.findOneAndDelete({"order.id": razorpay_order_id})
       if(!dborder) return res.status(400).json({error: "sesson timeout"})
       const data = {...dborder._doc, paymentStatus: true, }
+
       await ConfirmOrders.create(data)
-      console.log("saved successfuly")
+
+      if(dborder.type === "cart"){
+        await Cart.deleteOne({userID: dborder.userID})
+      }
+
     } catch (error) {
       console.log(error)
+      return res.status(400).json({success: false, message: "failed to process your information"});       
     }
     return res.redirect(`${process.env.BACE_FRONTEND_URL}/paymentsuccess?refrence=${razorpay_payment_id}`);
   } else {
@@ -80,7 +132,6 @@ router.post("/paymentVerify", async (req,res) => {
 })
 
 router.get("/getKey", async (req,res) =>{
-      console.log("get key runed")
       return res.status(200).json({key:process.env.RAZORPAY_KEY_ID})
 })
 

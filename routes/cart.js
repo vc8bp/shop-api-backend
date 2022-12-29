@@ -107,7 +107,6 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
   
   //get user cart
   router.get("/info/:userId", verifyUserWithToken, async (req, res) => {
-    console.log(req.user.id)
     try {
       const cart = await Cart.aggregate([
         {$match: {userID: req.user.id}},
@@ -137,18 +136,16 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
         
       ]);
       if(!cart.length) {
-        return res.status(200).json({success: true, message: "no proucts foound"})
+        return res.status(200).json({success: true, message: "no proucts foound", productFound: false})
       }
       const [cartt] = cart; //removing array brackets
-      console.log(cart)
-
       const margedProducts = []        
       cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
         const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
         margedProducts.push({ ...product, ...productInfo });
       })
   
-      res.status(200).json({userID: req.user.id, cartID: cartt._id, products: margedProducts})
+      res.status(200).json({userID: req.user.id, cartID: cartt._id, products: margedProducts, productFound: true})
       
     } catch (err) {
       console.log(err)
