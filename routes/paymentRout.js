@@ -5,8 +5,10 @@ const crypto = require("crypto")
 const Product = require("../models/product");
 const Order = require("../models/order");
 const Cart = require('../models/cart.js')
+const User = require('../models/user.js')
 const ConfirmOrders = require("../models/ConfirmOrders");
 const { verifyUserWithToken } = require("./tokenVerify");
+const { default: mongoose } = require("mongoose");
 
 dotenv.config();
 
@@ -117,7 +119,16 @@ router.post("/paymentVerify", async (req,res) => {
       await ConfirmOrders.create(data)
 
       if(dborder.type === "cart"){
-        await Cart.deleteOne({userID: dborder.userID})
+        const productIDS = await dborder.products.reduce((neww, current) => { // to get only id's of product which are available on order 
+          return [...neww, current._id]
+        },[])
+        console.log(productIDS)
+        //await Product.updateMany({_id :{$in: productIDS}}, {$inc: {purchasedCount: 1}}) //adding 1 to the purchasedCount in quantity
+        await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts : { $each : productIDS}}})
+        //await Cart.deleteOne({userID: dborder.userID})   
+      } else {
+        const idObject = mongoose.Types.ObjectId(dborder.products[0].productID) //converting in ObjectID
+        await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts :  idObject}})
       }
 
     } catch (error) {

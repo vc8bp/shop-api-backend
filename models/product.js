@@ -12,6 +12,7 @@ const { Schema } = mongoose;
     color: { type: Array },
     price: { type: Number, required: true},
     inStock: { type: Boolean, default: true},
+    purchasedCount: { type: Number, default: 0}
   },{timestamps: true}
   );
 
