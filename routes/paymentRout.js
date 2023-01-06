@@ -123,9 +123,9 @@ router.post("/paymentVerify", async (req,res) => {
           return [...neww, current._id]
         },[])
         console.log(productIDS)
-        //await Product.updateMany({_id :{$in: productIDS}}, {$inc: {purchasedCount: 1}}) //adding 1 to the purchasedCount in quantity
+        await Product.updateMany({_id :{$in: productIDS}}, {$inc: {purchasedCount: 1}}) //adding 1 to the purchasedCount in quantity
         await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts : { $each : productIDS}}})
-        //await Cart.deleteOne({userID: dborder.userID})   
+        await Cart.deleteOne({userID: dborder.userID})   
       } else {
         const idObject = mongoose.Types.ObjectId(dborder.products[0].productID) //converting in ObjectID
         await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts :  idObject}})
