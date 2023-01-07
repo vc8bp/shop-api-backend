@@ -60,9 +60,13 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
         const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
         margedProducts.push({ ...product, ...productInfo });
       })
+
+      if(!margedProducts) {
+        res.status(404).json("no products found on your cart")
+      }
       
       //calculationg total price
-      price = await margedProducts?.reduce((total, item) => {
+      price = await margedProducts.reduce((total, item) => {
         return total + (item.price * item.quantity)
       },0)
       console.log({price})

@@ -15,8 +15,8 @@ const server = app.listen(appPort, () => {
 })
 
 //unexpected error handling
-process.on("uncaughtException", (err, promis) => {
-  console.log(`Logged Error from index js: ${err}`);
+process.on("uncaughtException", (err) => {
+  console.log(`Logged Error from index js: ${err.stack}`);
   server.close(() => process.exit(1));
 })
 

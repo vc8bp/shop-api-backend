@@ -1,7 +1,9 @@
-FROM node:9-slim
+FROM node:16-alpine
 WORKDIR /app
-COPY pakage.json /app
+FROM node:12-alpine
+WORKDIR /app
+COPY package.json .
 RUN npm install
-COPY . /app
+COPY . .
 CMD ["npm", "run", "dev"]
 EXPOSE 4000
