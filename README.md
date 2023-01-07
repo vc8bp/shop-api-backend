@@ -78,7 +78,7 @@
 
   
 
-Live demo (Feel free to visit) 👉 : <a  href="https://e-commerce-a-p-i.herokuapp.com">Shop API</a>
+Live demo (Feel free to visit) 👉 : <a  href="https://shopapi.onrender.com">Shop API</a>
 
   
 
@@ -142,8 +142,6 @@ Live demo (Feel free to visit) 👉 : <a  href="https://e-commerce-a-p-i.herokua
 ## Built With
 
 List of any major frameworks used to build the project.
-
-  
 
 * [NodeJS](https://nodejs.org/) - JS runtime environment
 
