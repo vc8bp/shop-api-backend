@@ -49,8 +49,17 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
 
     try {
       const savedProducts = await Product.findById(req.params.id);
-      res.status(200).json(savedProducts)
+      if(!savedProducts) {
+        return res.status(404).json("Product not Foundd");
+      }
+
+      setTimeout(() => {
+        res.status(200).json(savedProducts)
+      }, 5000);
     } catch (err) {
+      if(err.name === "CastError"){
+        return res.status(404).json("Product not Found");
+      }
       res.status(500).json(err);
     }
   });
