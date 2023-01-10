@@ -17,7 +17,7 @@ router.post("/:productid", verifyUserWithToken ,async (req, res) => {
 
     try {
         // 2) Check if the user make a review before on that product
-        const checkUser = await Reviews.find({user: req.user.id, product: req.params.productid})
+        let checkUser = await Reviews.find({user: req.body.id, product: req.params.productid})
         console.log(checkUser.length)
         if (checkUser.length !== 0) {
             return res.status(400).json({success: 'Error',message: 'onlyOneReview'});
@@ -25,7 +25,7 @@ router.post("/:productid", verifyUserWithToken ,async (req, res) => {
 
         //create review
         const newReview = await Reviews.create({
-            user: req.user.id, 
+            user: req.body.id, 
             product: req.params.productid,
             rating,
             review
@@ -33,8 +33,18 @@ router.post("/:productid", verifyUserWithToken ,async (req, res) => {
         res.status(201).json({success: true, message: "successfulReviewCreate"})
 
     } catch (error) {
+        console.log(error)
         res.status(500).json({success: false, message: "internal server error"})
     }   
+    
+    
+})
+
+//GET REVIEWS
+
+router.get("/:id", async (req, res) => {
+    const review = await Reviews.find({product: req.params.id})
+    res.status(200).json(review)
 })
 
 module.exports = router

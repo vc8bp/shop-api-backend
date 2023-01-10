@@ -1,5 +1,7 @@
 const mongoose = require("mongoose")
+const product = require("./product")
 const {Schema} = mongoose
+
 
 const ReviewSchema = new Schema(
     {
@@ -23,7 +25,47 @@ const ReviewSchema = new Schema(
           required: [true, 'Review must belong to a user']
         }
     },
-    { timestamps: true }
+    { 
+      timestamps: true,
+    }                                 
+
 )
+
+ReviewSchema.post('save', function() {
+  console.log("post runed")
+  ReviewSchema.static.calcAvgRating(this.product)
+})
+
 const Reviews = mongoose.model("Reviews", ReviewSchema)
+
+
+//calculating avg
+ReviewSchema.static.calcAvgRating = async function(productID) {
+  console.log("calc runed")
+  const stats = await Reviews.aggregate([
+    {$match: {product: productID}},
+    {
+      $group: {
+        _id: "$product",
+        numberOfRating: {$sum: 1},
+        avg: {$avg: "$rating"}
+      }
+    }
+  ])
+
+  //updating products based on any action on reviews
+  if(stats.length > 0) {
+    await product.findByIdAndUpdate(productID, {
+      ratingsQuantity : stats[0].numberOfRating,
+      ratingsAverage: stats[0].avg
+    })
+  }else {
+    await product.findByIdAndUpdate(productID, {
+      ratingsQuantity : 0,
+      ratingsAverage: 4.5
+    })
+  }
+}
+
+
 module.exports = Reviews;
