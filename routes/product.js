@@ -52,10 +52,7 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
       if(!savedProducts) {
         return res.status(404).json("Product not Foundd");
       }
-
-      setTimeout(() => {
         res.status(200).json(savedProducts)
-      }, 5000);
     } catch (err) {
       if(err.name === "CastError"){
         return res.status(404).json("Product not Found");

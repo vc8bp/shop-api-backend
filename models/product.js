@@ -22,6 +22,5 @@ const { Schema } = mongoose;
   },{timestamps: true}
   );
 
-
-
+  
   module.exports = mongoose.model('products', ProductSchema);
