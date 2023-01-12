@@ -24,16 +24,12 @@ const ReviewSchema = new Schema(
           ref: 'User',
           required: [true, 'Review must belong to a user']
         },
-        upVotes: {
-          users: [
+        upVotes: [
             {userID: {type: mongoose.Types.ObjectId, ref: 'User',}}
         ],
-        },
-        abuseReports: {
-          users: [
+        abuseReports: [
             {userID: {type: mongoose.Types.ObjectId, ref: 'User',}}
         ],
-        }
     },
     { 
       timestamps: true,

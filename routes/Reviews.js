@@ -57,7 +57,7 @@ router.get("/:id", async (req, res) => {
                 as: "user"
             }
         },
-        {$sort: {"upVotes.users": -1}},
+        {$sort: {"upVotes": -1}},
         {$project: {"user._id": 1, "user.firstName": 1, "user.lastName": 1, "user.avatar": 1 ,review: 1, rating: 1, createdAt: 1}},
         {$unwind: "$user"}
         
@@ -66,41 +66,60 @@ router.get("/:id", async (req, res) => {
 })
 
 router.put("/abuse/:id", verifyToken , async (req, res) => {
-    const checkUser = await Reviews.findOne({
-        _id: mongoose.Types.ObjectId(req.params.id), 
-        "abuseReports.users": {$elemMatch: {userID: mongoose.Types.ObjectId(req.user.id)}}
-    })
+    try {
+        // Find the review with the matching id 
+        const dbreview = await Reviews.findOne({
+            _id: mongoose.Types.ObjectId(req.params.id),
+        });
+        if (!dbreview) {
+            return res.status(404).json({ success: true, message: "review not found" });
+        }
+        // If the user has already repored the review, return error message
+        if (dbreview.abuseReports.some(vote => vote.userID.toString() === req.user.id)) {
+            return res.status(400).json({ success: true, message: "you can not report more then once" });
+        }
+        // If the user is trying to reports his own review, return error message
+        if (dbreview.user.toString() === req.user.id) {
+            return res.status(400).json({ success: true, message: "you can not report your own review" });
+        }
+        // Update the review and add the user's report
+        await Reviews.findByIdAndUpdate(req.params.id, { $push: { "abuseReports": { userID: req.user.id } } }, { new: true });
+        return res.status(200).json({ success: true, message: "Thank you for your contribution, your responce has been recorded" });
 
-    //if user tryes to report his own review
-    if(checkUser.user.toString() === req.user.id) {
-        return res.status(400).json({success: true, message: "you can not report your own review"})
+    } catch (err) {
+        return res.status(500).json({ success: false, message: "something went wrong" });
     }
-
-    //if user already have reported
-    if(checkUser.length !== 0){
-        return res.status(400).json({success: true, message: "you can not report more then once"})
-    } 
-    const ress = await Reviews.findByIdAndUpdate(req.params.id, {$push: {"abuseReports.users": {userID : req.user.id}}}, {new: true})
-    res.status(200).json({success: true, message: "Thankyou for your contribution, your responce has ben recorded"})
 })
+
 
 router.put("/upvote/:id", verifyToken , async (req, res) => {
-    const checkUser = await Reviews.findOne({
-        _id: mongoose.Types.ObjectId(req.params.id), 
-        "upVotes.users": {$elemMatch: {userID: mongoose.Types.ObjectId(req.user.id)}}
-    })
-    //if user tryes to upvote his own review
-    if(checkUser.user.toString() === req.user.id){     
-        console.log("i am true")   
-        return res.status(400).json({success: true, message: "you can not upvote your own review"})
-    }
+    try {
+        // Find the review with the matching id 
+        const dbreview = await Reviews.findOne({
+            _id: mongoose.Types.ObjectId(req.params.id),
+        });
+        console.log(dbreview)
+        if (!dbreview) {
+            return res.status(404).json({ success: true, message: "review not found" });
+        }
+        // If the user has already upvoted the review, return error message
 
-    //if user already have upvoted
-    if(checkUser.length !== 0){
-        return res.status(400).json({success: true, message: "you can not upvote more then once"})
-    } 
-    const ress = await Reviews.findByIdAndUpdate(req.params.id, {$push: {"upVotes.users": {userID : req.user.id}}}, {new: true})
-    res.status(200).json({success: true, message: "Thankyou for your contribution, your responce has ben recorded"})
-})
+        if (dbreview.upVotes.some(vote => vote.userID.toString() === req.user.id)) {
+            return res.status(400).json({ success: true, message: "you can not upvote more then once" });
+        }
+        // If the user is trying to upvote his own review, return error message
+        if (dbreview.user.toString() === req.user.id) {
+            return res.status(400).json({ success: true, message: "you can not upvote your own review" });
+        }
+        // Update the review and add the user's upvote
+        await Reviews.findByIdAndUpdate(req.params.id, { $push: { "upVotes": { userID: req.user.id } } }, { new: true });
+        return res.status(200).json({ success: true, message: "Thank you for your contribution, your responce has been recorded" });
+
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ success: false, message: "something went wrong" });
+    }
+});
+
  
 module.exports = router
