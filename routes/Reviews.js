@@ -1,6 +1,5 @@
 const { default: mongoose } = require("mongoose");
-const Reviews = require("../models/reviews");
-const { route } = require("./product");
+const Reviews = require("../models/Reviews");
 const { verifyToken } = require("./tokenVerify");
 
 const router = require("express").Router()
