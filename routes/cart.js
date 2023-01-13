@@ -4,7 +4,7 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 //add new product to cart req: login
 
-router.post("/", verifyUserWithToken, async (req, res) => {
+router.post("/:id", verifyUserWithToken, async (req, res) => {
     //const newCart = new cart(req.body);
     try {
       const cart = await Cart.findOne({userID: req.user.id})
