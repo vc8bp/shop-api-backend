@@ -4,15 +4,14 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 //add new product to cart req: login
 
-router.post("/:id", verifyUserWithToken, async (req, res) => {
+router.post("/", verifyUserWithToken, async (req, res) => {
     //const newCart = new cart(req.body);
+  
     try {
       const cart = await Cart.findOne({userID: req.user.id})
 
         //if that user cart exist
-        if(cart) {
-          console.log("user cart exist")
-          
+        if(cart) {        
           let itemIndex = cart.products.findIndex(p => p.productID === req.body.products[0].productID);
           console.log(`dublicate index : ${itemIndex}`)
           
@@ -26,7 +25,7 @@ router.post("/:id", verifyUserWithToken, async (req, res) => {
             await cart.save();
             
             console.log("cart updated");
-            return res.status(200).json({status: "success", productExisted: true})
+            return res.status(200).json({status: "success", productExisted: true, message: "Product Quantity updated to Cart Successfully"})
             
         // if user cart dosent have that product
         } else {
@@ -37,19 +36,17 @@ router.post("/:id", verifyUserWithToken, async (req, res) => {
             }
           },{new: true})
 
-          return res.status(200).json({status: "success", productExisted: false})
+          return res.status(200).json({status: "success", productExisted: false, message: "Product Quantity added to Successfully"})
         }
  
       } else {
-        console.log("product added")
         const newCart = Cart({...req.body, userID: req.user.id});
-        const savedCart = await newCart.save();
-        console.log("product added")
-        return res.status(200).json({status: "success", productExisted: false})
+        await newCart.save();
+        return res.status(200).json({status: "success", productExisted: false, message: "Product Quantity added to Successfully"})
 
       }
     } catch (err) {
-      res.status(500).json(err);
+      res.status(500).json({status: "failed",  message: "Internal Server Error"});
       console.log(err)
     }
   });
@@ -70,7 +67,7 @@ router.get('/size',verifyUserWithToken,async (req, res)=>{
       
     } catch (error) {
       console.log(error)
-      res.status(500).json("internal server error")
+      res.status(500).json({message: "internal server error"})
     }
     
 
@@ -80,13 +77,14 @@ router.get('/size',verifyUserWithToken,async (req, res)=>{
 //update products Quantity in cart
 router.put("/updatequantity/:productNumber/:newQuantity", verifyUserWithToken, async (req,res) => {
     try {
-      const cart = await Cart.update(
+      await Cart.updateOne(
         {userID: req.user.id, "products.productID": req.params.productNumber},
         {$set: {"products.$.quantity": req.params.newQuantity}}
       )
-      res.status(200).json(cart)
+      res.status(200).json({status: "success", message: "Product Quantity Updated Successfully"})
     } catch (error) {
       console.log(error)
+      res.status(500).json({status: "failed", message: "Internal Server Error"})
     }
 })
 
@@ -95,11 +93,11 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
     console.log(req.params.id)
     try {
       await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.id}}})
-      res.status(200).json("cart deleted");
+      res.status(200).json({status: "success", message: "Product deleted Successfully"})
       
     } catch (err) {
       console.log(err)
-      res.status(500).json(err);
+      res.status(500).json({status: "failed", message: "Internal Server Error"})
     }
   });
   
@@ -136,7 +134,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
         
       ]);
       if(!cart.length) {
-        return res.status(200).json({success: true, message: "no proucts foound", productFound: false})
+        return res.status(404).json({success: true, message: "no proucts foound"})
       }
       const [cartt] = cart; //removing array brackets
       const margedProducts = []        

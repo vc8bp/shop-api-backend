@@ -11,7 +11,7 @@ const sendEmail = require('../helpers/sendEmail');
 //Register
 router.post("/register", async (req, res) => {
   if (req.body.password.length < 5 || req.body.password.length > 16 ) {
-      return res.status(400).json({ error: "password length should be in range of 5 to 16 charecter"})
+      return res.status(400).json({sucess: false,message: "password length should be in range of 5 to 16 charecter"})
   };
   const newUser = new User({
     firstName: req.body.firstName,
@@ -37,16 +37,16 @@ router.post("/register", async (req, res) => {
   } catch (err) {
       console.log(err)
       if(err.code === 11000) { 
-        return res.status(400).json({error: "account with this email already exist"}) 
-      } else if (err.name === "ValidationError") { //this is some googled stuff
+        return res.status(400).json({sucess: false,message: "account with this email already exist"}) 
+      } else if (err.name === "ValidationError") {
           if (err.name == 'ValidationError') {
             for (field in err.errors) {
-              return res.status(400).json({error: err.errors[field].message}); 
+              return res.status(400).json({sucess: false,message: err.errors[field].message}); 
             }
           }
       } else {
       console.log(`Logged Error from register user : ${err}`)
-      return res.status(500).json({error: "internal server error"})
+      return res.status(500).json({sucess: false,message: "internal server error"})
       }
   }
   
@@ -57,20 +57,20 @@ router.post("/login", async (req, res) => {
 
   console.log(req.body)
   if(!req.body.email || !req.body.password) {
-    return res.status(400).json({error: "please provide email and password"})
+    return res.status(400).json({sucess: false,message: "please provide email and password"})
   }
 
   try {
     const user = await User.findOne({email: req.body.email});
       if (!user) {
-        return res.status(401).json({error: "user with this emil dosent exist"})
+        return res.status(401).json({sucess: false,message: "user with this emil dosent exist"})
       } 
       
       //checking if this login req is for admin
       if(req.body.forAdmin) {
         if (!user.isAdmin) {
           console.log("he is not admin");
-          return res.status(401).json({error: "wrong credentials"}) 
+          return res.status(401).json({sucess: false,message: "wrong credentials"}) 
         }
       }
 
@@ -80,7 +80,7 @@ router.post("/login", async (req, res) => {
       console.log(`db pass = ${pass}`)
       console.log(`user pass = ${req.body.password}`)
       if(pass !== req.body.password) {
-        return res.status(401).json({error: "wrong credentials"}) 
+        return res.status(401).json({sucess: false,message: "wrong credentials"}) 
       }
       
       const accessToken = jwt.sign({
@@ -95,7 +95,7 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.log(`Logged Error from login user : ${err}`)
     return res.status(500).json({ // Worked
-      error: "Internal server error",
+      sucess: false,message: "Internal server error",
     });
     
   }
@@ -110,7 +110,7 @@ router.post("/forgotpass", async (req, res)=> {
   console.log(resetToken)
   console.log(hashedresetPasswordToken);
 
-  if(!email) return res.status(400).json({error: "please provide a email"});
+  if(!email) return res.status(400).json({sucess: false,message: "please provide a email"});
   try {
     
 
@@ -120,7 +120,7 @@ router.post("/forgotpass", async (req, res)=> {
       resetPasswordExpire: expireDate
     });
 
-    if(!user) return res.status(401).json({ error: "user with this email not exist"});
+    if(!user) return res.status(401).json({sucess: false,message: "user with this email not exist"});
   
     //sending email thing
     const resetURl = `https://satnamcreation.netlify.app/resetpassword/${resetToken}`
@@ -155,9 +155,9 @@ router.post("/forgotpass", async (req, res)=> {
         resetPasswordExpire: undefined
       });
       console.log(error)
-      return res.status(401).json({error: "Failed to send email"})
+      return res.status(401).json({sucess: false,message: "Failed to send email"})
     }
-    res.status(200).json("Email send Sucessfully")
+    res.status(200).json({sucess: true,message: "Email send Sucessfully"})
 
 
   } catch (error) {

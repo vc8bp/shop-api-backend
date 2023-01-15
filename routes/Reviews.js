@@ -6,14 +6,14 @@ const router = require("express").Router()
 
 router.post("/:productid", verifyToken ,async (req, res) => {
     const {review, rating} = req.body;
-
+    console.log("me runed")
       // 1) Check if user entered all fields
     if(!review && !rating) {
-        return res.status(400).json({success: false, message: "fieldsRequired"})
+        return res.status(400).json({success: false, message: "All fields ae Required"})
     }
     
     if (rating < 1) {
-        return res.status(400).json({success: false, message: 'ratingLessThanOne'});
+        return res.status(400).json({success: false, message: 'Rating cant be less then One'});
     }
 
     try {
@@ -21,7 +21,7 @@ router.post("/:productid", verifyToken ,async (req, res) => {
         let checkUser = await Reviews.find({user: req.user.id, product: req.params.productid})
         console.log(checkUser.length)
         if (checkUser.length !== 0) {
-            return res.status(400).json({success: 'Error',message: 'onlyOneReview'});
+            return res.status(400).json({success: 'Error',message: 'Only One Review is allowed Per user'});
         }
 
         //create review
@@ -31,7 +31,7 @@ router.post("/:productid", verifyToken ,async (req, res) => {
             rating,
             review
         })
-        res.status(201).json({success: true, message: "successfulReviewCreate"})
+        res.status(201).json({success: true, message: "your Review is Successfully added"})
 
     } catch (error) {
         console.log(error)
@@ -71,15 +71,15 @@ router.put("/abuse/:id", verifyToken , async (req, res) => {
             _id: mongoose.Types.ObjectId(req.params.id),
         });
         if (!dbreview) {
-            return res.status(404).json({ success: true, message: "review not found" });
+            return res.status(404).json({ success: false, message: "review not found" });
         }
         // If the user has already repored the review, return error message
         if (dbreview.abuseReports.some(vote => vote.userID.toString() === req.user.id)) {
-            return res.status(400).json({ success: true, message: "you can not report more then once" });
+            return res.status(400).json({ success: false, message: "you can not report more then once" });
         }
         // If the user is trying to reports his own review, return error message
         if (dbreview.user.toString() === req.user.id) {
-            return res.status(400).json({ success: true, message: "you can not report your own review" });
+            return res.status(400).json({ success: false, message: "you can not report your own review" });
         }
         // Update the review and add the user's report
         await Reviews.findByIdAndUpdate(req.params.id, { $push: { "abuseReports": { userID: req.user.id } } }, { new: true });
@@ -99,16 +99,16 @@ router.put("/upvote/:id", verifyToken , async (req, res) => {
         });
         console.log(dbreview)
         if (!dbreview) {
-            return res.status(404).json({ success: true, message: "review not found" });
+            return res.status(404).json({ success: false, message: "review not found" });
         }
         // If the user has already upvoted the review, return error message
 
         if (dbreview.upVotes.some(vote => vote.userID.toString() === req.user.id)) {
-            return res.status(400).json({ success: true, message: "you can not upvote more then once" });
+            return res.status(400).json({ success: false, message: "you can not upvote more then once" });
         }
         // If the user is trying to upvote his own review, return error message
         if (dbreview.user.toString() === req.user.id) {
-            return res.status(400).json({ success: true, message: "you can not upvote your own review" });
+            return res.status(400).json({ success: false, message: "you can not upvote your own review" });
         }
         // Update the review and add the user's upvote
         await Reviews.findByIdAndUpdate(req.params.id, { $push: { "upVotes": { userID: req.user.id } } }, { new: true });
