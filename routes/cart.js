@@ -25,7 +25,7 @@ router.post("/", verifyUserWithToken, async (req, res) => {
             await cart.save();
             
             console.log("cart updated");
-            return res.status(200).json({status: "success", productExisted: true, message: "Product Quantity updated to Cart Successfully"})
+            return res.status(200).json({status: "success", productExisted: true, message: "Product Quantity updated to Cart"})
             
         // if user cart dosent have that product
         } else {
@@ -36,13 +36,13 @@ router.post("/", verifyUserWithToken, async (req, res) => {
             }
           },{new: true})
 
-          return res.status(200).json({status: "success", productExisted: false, message: "Product Quantity added to Successfully"})
+          return res.status(200).json({status: "success", productExisted: false, message: "Product added to Cart"})
         }
  
       } else {
         const newCart = Cart({...req.body, userID: req.user.id});
         await newCart.save();
-        return res.status(200).json({status: "success", productExisted: false, message: "Product Quantity added to Successfully"})
+        return res.status(200).json({status: "success", productExisted: false, message: "Product added to Cart"})
 
       }
     } catch (err) {
@@ -52,7 +52,7 @@ router.post("/", verifyUserWithToken, async (req, res) => {
   });
 
 //get cart size
-router.get('/size',verifyUserWithToken,async (req, res)=>{
+router.get('/size',verifyToken,async (req, res)=>{
     try {
       const cartSize = await Cart.aggregate([
         {$match: {userID: req.user.id}},

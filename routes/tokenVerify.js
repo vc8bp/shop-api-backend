@@ -6,26 +6,24 @@ const verifyToken = (req, res, next) => {
         token = authHeader.split(" ")[1];
         jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user)=> {
           if(err){
-            res.status(403).json("token is not valid");
+            res.status(403).json({message: "token is not valid"});
           }else {
              req.user = user;
             next();
           }
         })
     } else {
-      res.status(401).json("you are not authenticated");
+      res.status(401).json({message: "You are not Loged in"});
     }
   }
 
 const verifyUserWithToken = (req, res, next) => {
 
     verifyToken(req, res, ()=> {
-      console.log(req.user.id)
-      console.log(req.params.id)
       if(req.user.id === req.params.id || req.user.isAdmin === true) {
           next()
       } else {
-          res.status(403).json("you are not allowed to do thet ")
+          res.status(403).json({message: "you are not allowed to do thet "})
       }
     })   
 }
@@ -35,7 +33,7 @@ const verifyAdminWithToken = (req, res, next) => {
     if(req.user.isAdmin === true) {
         next()
     } else {
-        res.status(403).json("you are not allowed to do thet");      
+        res.status(403).json({message: "you are not allowed to do thet"});      
     }
   })   
 }

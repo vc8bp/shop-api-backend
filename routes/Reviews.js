@@ -44,24 +44,37 @@ router.post("/:productid", verifyToken ,async (req, res) => {
 //GET REVIEWS
 
 router.get("/:id", async (req, res) => {
-    const review = await Reviews.aggregate([
-        {
-            $match: {product: mongoose.Types.ObjectId(req.params.id)}
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user"
-            }
-        },
-        {$sort: {"upVotes": -1}},
-        {$project: {"user._id": 1, "user.firstName": 1, "user.lastName": 1, "user.avatar": 1 ,review: 1, rating: 1, createdAt: 1}},
-        {$unwind: "$user"}
-        
-    ])
-    res.status(200).json(review)
+    try {
+        if(!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(404).json("Invalid Product ID");
+        }
+        const review = await Reviews.aggregate([
+            {
+                $match: {product: mongoose.Types.ObjectId(req.params.id)}
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            {
+                $addFields: { //adding this field to get the size of upvotex an rank it based on the upVotes
+                    upVotesLength: {$size: "$upVotes"}
+                }
+            },
+            {$sort: {"upVotesLength": -1}},
+            {$project: {"user._id": 1, "user.firstName": 1, "user.lastName": 1, "user.avatar": 1 ,review: 1, rating: 1, createdAt: 1, upVotesLength: 1}},
+            {$unwind: "$user"}
+            
+        ])
+        res.status(200).json(review)
+    } catch (error) {
+        res.status(500).json({message: "internal server error"})
+    }
+    
 })
 
 router.put("/abuse/:id", verifyToken , async (req, res) => {

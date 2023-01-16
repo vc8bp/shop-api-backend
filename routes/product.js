@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const product = require("../models/product");
+const mongoose  = require("mongoose");
 const Product = require("../models/product");
 const {verifyAdminWithToken} = require("./tokenVerify")
 
@@ -47,6 +47,10 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
   //get specific product info
   router.get("/info/:id", async (req, res) => {
 
+    if(!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json("Invalid Product ID");
+    }
+
     try {
       const savedProducts = await Product.findById(req.params.id);
       if(!savedProducts) {
@@ -58,21 +62,27 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
       if(err.name === "CastError"){
         return res.status(404).json("Product not Found");
       }
-      res.status(500).json(err);
+      console.log("/info/:id Errorrrrrr")
+      console.log(err)
+      res.status(500).json({message: "internal server Error"});
     }
   });
   
   //get app product info or pass query to get newest added specific ammount of products 
   //req:admin login
   //GET ALL PRODUCTS
-router.get("/allinfo", async (req, res) => {
+router.get("/allinfo",async (req, res) => {
+    const { page = 1, limit = 5 } = req.query;
+    const startIndex = (page - 1) * limit;
+
     const qNew = req.query.new;
     const qCategory = req.query.category;
     try {
       let products;
   
       if (qNew) {
-        products = await Product.find().sort({ createdAt: -1 }).limit(qNew);
+        console.log("inside newwwwwwww")
+        products = await Product.find().sort({ createdAt: -1 }).skip(startIndex).limit(limit)
       } else if (qCategory) {
         products = await Product.find({
           categories: {
@@ -80,7 +90,7 @@ router.get("/allinfo", async (req, res) => {
           },
         });
       } else {
-        products = await Product.find();
+        products = await Product.find().skip(startIndex).limit(limit);
       }
   
       res.status(200).json(products);

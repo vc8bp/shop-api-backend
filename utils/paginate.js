@@ -19,3 +19,5 @@ const paginate = (model) => async (req, res, next) => {
     res.paginatedResults = results;
     next();
 }
+
+module.exports = paginate;
