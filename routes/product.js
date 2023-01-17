@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const mongoose  = require("mongoose");
+const { count } = require("../models/product");
 const Product = require("../models/product");
 const {verifyAdminWithToken} = require("./tokenVerify")
 
@@ -72,31 +73,43 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
   //req:admin login
   //GET ALL PRODUCTS
 router.get("/allinfo",async (req, res) => {
-    const { page = 1, limit = 5 } = req.query;
+    const { page = 1, limit = 2 } = req.query;
     const startIndex = (page - 1) * limit;
-
-    const qNew = req.query.new;
     const qCategory = req.query.category;
+    const qsort = req.query.sort;
+    const qColor = req.query.color;
+    const qSize = req.query.size;
+
     try {
-      let products;
-  
-      if (qNew) {
-        console.log("inside newwwwwwww")
-        products = await Product.find().sort({ createdAt: -1 }).skip(startIndex).limit(limit)
-      } else if (qCategory) {
-        products = await Product.find({
-          categories: {
-            $in: [qCategory],
-          },
-        });
-      } else {
-        products = await Product.find().skip(startIndex).limit(limit);
+      let query = Product.find()
+
+      const filterArr = [];
+      if (qCategory) filterArr.push({ categories: { $in: [qCategory] } });
+      if (qColor) filterArr.push({ color: { $in: [qColor] } });
+      if (qSize) filterArr.push({ size: { $in: [qSize] } }); 
+      if (filterArr.length !== 0) {
+          query = query.find({ $and: filterArr });
       }
-  
+      
+
+
+      console.log({qCategory, qColor, qSize})
+
+      if(qsort === "new") {
+        query.sort({ createdAt: -1})
+      } else if (qsort === "price-asc") {
+        query.sort({ price : 1})
+      } else if (qsort === "price-desc") {
+        query.sort({ price : -1})
+      }
+      query.skip(startIndex).limit(limit)
+      const products = await query.exec()
       res.status(200).json(products);
-    } catch (err) {
+
+    } catch (error) {
       res.status(500).json(err);
     }
+
   });
 
 
@@ -105,7 +118,6 @@ router.get("/allinfo",async (req, res) => {
     if(!s) {
       return res.status(400).json("not found")
     }
-
     try {
       const products = await Product.find(
         {$or: [
