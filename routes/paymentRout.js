@@ -24,9 +24,9 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
 
 
     if(req.body.type === "product"){ //if req is for single product
-      const dbproduct = await Product.findById(req.body.product.productID);
+      const dbproduct = await Product.findById(req.body.product.productID,{price: 1, img: 1, title: 1,_id: 0});
       price = dbproduct.price * req.body.product.quantity;
-    
+      req.finalProduct = {...dbproduct._doc, ...req.body.product} //appending dbProduct info with user product info so that i can store the value in db
 
     } else if(req.body.type === "cart"){ //if req is for whole cart
       cart = await Cart.aggregate([
@@ -47,6 +47,8 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
               productno: 1,
               _id: 1,
               price: 1,
+              title: 1,
+              img: 1
             }
           }
         },
@@ -85,7 +87,7 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
       const dbOrder = await Order.create({
         userID: req.user.id,
         type: req.body.type,  // is it cart payment or a single product payment
-        products: req.body.product || margedProducts,
+        products: req.finalProduct || margedProducts,
         price: price,
         address: {address: "empty"},
         order: response,

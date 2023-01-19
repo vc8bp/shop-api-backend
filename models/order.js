@@ -7,6 +7,9 @@ const { Schema } = mongoose;
     type: { type: String }, // is it cart payment or a single product payment
     products: [
         {
+            title: {type: String},
+            img: {type: String},
+            price: {type: Number},
             productID: {type: String},
             quantity: {type: Number, default: 1},
             size: {type: String},

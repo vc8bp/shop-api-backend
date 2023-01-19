@@ -68,12 +68,10 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
       res.status(500).json({message: "internal server Error"});
     }
   });
-  
-  //get app product info or pass query to get newest added specific ammount of products 
-  //req:admin login
+
   //GET ALL PRODUCTS
 router.get("/allinfo",async (req, res) => {
-    const { page = 1, limit = 2 } = req.query;
+    const { page = 1, limit = 10 } = req.query;
     const startIndex = (page - 1) * limit;
     const qCategory = req.query.category;
     const qsort = req.query.sort;
@@ -90,24 +88,22 @@ router.get("/allinfo",async (req, res) => {
       if (filterArr.length !== 0) {
           query = query.find({ $and: filterArr });
       }
-      
 
-
-      console.log({qCategory, qColor, qSize})
-
-      if(qsort === "new") {
+      if(qsort === "Newest") { 
         query.sort({ createdAt: -1})
-      } else if (qsort === "price-asc") {
+      } else if (qsort === "price-asc") {  
         query.sort({ price : 1})
       } else if (qsort === "price-desc") {
         query.sort({ price : -1})
       }
       query.skip(startIndex).limit(limit)
       const products = await query.exec()
+      
       res.status(200).json(products);
+      
 
     } catch (error) {
-      res.status(500).json(err);
+      res.status(500).json({message: "failed to get Product" });
     }
 
   });
