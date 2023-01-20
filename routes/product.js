@@ -71,7 +71,7 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
 
   //GET ALL PRODUCTS
 router.get("/allinfo",async (req, res) => {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 5 } = req.query;
     const startIndex = (page - 1) * limit;
     const qCategory = req.query.category;
     const qsort = req.query.sort;

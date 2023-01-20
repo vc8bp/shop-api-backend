@@ -4,7 +4,7 @@ const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./toke
 
 //add new product to cart req: login
 
-router.post("/", verifyUserWithToken, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
     //const newCart = new cart(req.body);
   
     try {
@@ -75,7 +75,7 @@ router.get('/size',verifyToken,async (req, res)=>{
 })
 
 //update products Quantity in cart
-router.put("/updatequantity/:productNumber/:newQuantity", verifyUserWithToken, async (req,res) => {
+router.put("/updatequantity/:productNumber/:newQuantity", verifyToken, async (req,res) => {
     try {
       await Cart.updateOne(
         {userID: req.user.id, "products.productID": req.params.productNumber},
@@ -89,7 +89,7 @@ router.put("/updatequantity/:productNumber/:newQuantity", verifyUserWithToken, a
 })
 
 
-router.delete("/:id", verifyUserWithToken, async (req, res) => {
+router.delete("/:id", verifyToken, async (req, res) => {
     console.log(req.params.id)
     try {
       await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.id}}})
@@ -104,7 +104,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
   
   
   //get user cart
-  router.get("/info/:userId", verifyUserWithToken, async (req, res) => {
+  router.get("/info/:userId", verifyToken, async (req, res) => {
     try {
       const cart = await Cart.aggregate([
         {$match: {userID: req.user.id}},

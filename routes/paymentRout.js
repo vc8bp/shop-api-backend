@@ -7,7 +7,7 @@ const Order = require("../models/order");
 const Cart = require('../models/cart.js')
 const User = require('../models/user.js')
 const ConfirmOrders = require("../models/ConfirmOrders");
-const { verifyUserWithToken } = require("./tokenVerify");
+const { verifyToken } = require("./tokenVerify");
 const { default: mongoose } = require("mongoose");
 
 dotenv.config();
@@ -17,7 +17,7 @@ const instance = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
-router.post("/checkout", verifyUserWithToken , async (req,res) => {
+router.post("/checkout", verifyToken , async (req,res) => {
     let price = undefined
     let cart = undefined
     const margedProducts = []   
@@ -55,32 +55,30 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
         
       ]);
 
-      const [cartt] = cart; //removing array brackets
+      const [cartt] = cart;//removing array brackets
+
+      if(!cartt) {
+        return res.status(404).json("no products found on your cart")
+      }
   
       
       cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
         const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
         margedProducts.push({ ...product, ...productInfo });
       })
-
-      if(!margedProducts) {
-        res.status(404).json("no products found on your cart")
-      }
       
       //calculationg total price
       price = await margedProducts.reduce((total, item) => {
         return total + (item.price * item.quantity)
       },0)
-      console.log({price})
     }
-    
-
+  
     const options = {
-        amount: Number(price * 100),  // amount in the smallest currency unit
+        amount: Number((price * 100).toFixed(2)),  // amount in the smallest currency unit && toFIxef: it will only allow two decemal values ater .
         currency: "INR",
         receipt: crypto.randomBytes(15).toString('hex')
       };
-
+    console.log(Number(price * 100))
     try {
       const response = await instance.orders.create(options)
       console.log(response)
@@ -88,7 +86,7 @@ router.post("/checkout", verifyUserWithToken , async (req,res) => {
         userID: req.user.id,
         type: req.body.type,  // is it cart payment or a single product payment
         products: req.finalProduct || margedProducts,
-        price: price,
+        price: Number(price.toFixed(2)),
         address: {address: "empty"},
         order: response,
       })
@@ -120,7 +118,7 @@ router.post("/paymentVerify", async (req,res) => {
     try {
       const dborder = await Order.findOneAndDelete({"order.id": razorpay_order_id})
       if(!dborder) return res.status(400).json({error: "sesson timeout"})
-      const data = {...dborder._doc, paymentStatus: true, }
+      const data = {...dborder._doc, paymentStatus: true,paymentInfo: req.body }
 
       await ConfirmOrders.create(data)
 
