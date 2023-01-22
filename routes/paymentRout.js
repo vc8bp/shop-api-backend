@@ -21,7 +21,7 @@ router.post("/checkout", verifyToken , async (req,res) => {
     let price = undefined
     let cart = undefined
     const margedProducts = []   
-
+    console.log(req.body)
 
     if(req.body.type === "product"){ //if req is for single product
       const dbproduct = await Product.findById(req.body.product.productID,{price: 1, img: 1, title: 1,_id: 0});
@@ -72,13 +72,12 @@ router.post("/checkout", verifyToken , async (req,res) => {
         return total + (item.price * item.quantity)
       },0)
     }
-  
+
     const options = {
         amount: Number((price * 100).toFixed(2)),  // amount in the smallest currency unit && toFIxef: it will only allow two decemal values ater .
         currency: "INR",
         receipt: crypto.randomBytes(15).toString('hex')
       };
-    console.log(Number(price * 100))
     try {
       const response = await instance.orders.create(options)
       console.log(response)
@@ -87,7 +86,7 @@ router.post("/checkout", verifyToken , async (req,res) => {
         type: req.body.type,  // is it cart payment or a single product payment
         products: req.finalProduct || margedProducts,
         price: Number(price.toFixed(2)),
-        address: {address: "empty"},
+        address: {address: req.body?.address},
         order: response,
       })
       res.json({
