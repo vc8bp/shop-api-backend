@@ -18,7 +18,6 @@ route.get("/", verifyToken ,async (req, res) => {
 })
 
 route.post("/", verifyToken ,async (req, res) => {
-    console.log(req.body)
     const {street, city, state, zip, country, mobile} = req.body;
 
     if(!street && !city && !state && !zip && !country && !mobile){

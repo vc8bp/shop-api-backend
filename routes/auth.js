@@ -103,17 +103,14 @@ router.post("/login", async (req, res) => {
 
 
 router.post("/forgotpass", async (req, res)=> {
+  if(!email) return res.status(400).json({sucess: false,message: "please provide a email"});
+
   const resetToken = crypto.randomBytes(20).toString('hex');
   const hashedresetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   const expireDate = Date.now() + (10 * 60000);
   const email = req.body.email;
-  console.log(resetToken)
-  console.log(hashedresetPasswordToken);
 
-  if(!email) return res.status(400).json({sucess: false,message: "please provide a email"});
   try {
-    
-
     //finding if user and updating it
     const user = await User.findOneAndUpdate({email: email}, {
       resetPasswordToken: hashedresetPasswordToken,
@@ -136,7 +133,40 @@ router.post("/forgotpass", async (req, res)=> {
       ${resetURl}
     `
     const emailHtml = `
-    <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Documentd</title><style>* {margin: 0;}.container{color: black }.center{text-align: center;}.secondcontainer{margin-left: 10px;}</style></head><body><div class="container" ><div class="firstcontainer" style="box-shadow: 0 2px 2px -2px rgba(0,0,0,.5);"><h1 style="margin: 10px 0px;" class="center">Satnam creation</h1><p style="margin: 10px 0px;" class="center" >Reset password</p></div><div class="secondcontainer"><p style="margin-bottom: 10px;">hi ${user.firstName}</p><p>Forgot your password?</p><p style="margin-bottom: 10px;"> We received a request to reset the password for your account</p><p>To reset password, click on the button below</p><a href=${resetURl}><button  style="margin-bottom: 10px;">Reset password</button></a><p>Or copy and past the URL in your browser</p><a href=${resetURl}>${resetURl}</a></div></div></body></html>
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Documentd</title>
+        <style>
+          * {margin: 0;}
+          .container{color: black }
+          .center{text-align: center}
+          .secondcontainer{margin-left: 10px;}
+        </style>
+      </head>
+      <body>
+        <div class="container" >
+          <div class="firstcontainer" style="box-shadow: 0 2px 2px -2px rgba(0,0,0,.5)">
+            <h1 style="margin: 10px 0px" class="center">Satnam creation</h1>
+            <p style="margin: 10px 0px;" class="center" >Reset password</p></div>
+            <div class="secondcontainer">
+              <p style="margin-bottom: 10px;">hi ${user.firstName}</p>
+              <p>Forgot your password?</p>
+              <p style="margin-bottom: 10px;"> We received a request to reset the password for your account</p>
+              <p>To reset password, click on the button below</p>
+              <a href=${resetURl}>
+                <button  style="margin-bottom: 10px;">Reset password</button>
+              </a>
+
+              <p>Or copy and past the URL in your browser</p>
+              <a href=${resetURl}>${resetURl}</a>
+          </div>
+        </div>
+      </body>
+    </html>
     `
 
     try {
