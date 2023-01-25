@@ -97,12 +97,11 @@ Live demo (Feel free to visit) 👉 : <a  href="https://shopapi.onrender.com">Sh
     * Reset Password [Public]
 
 * Email Management
-
     * Send Email for forgot password [User]
 
 * User
     * Create New User [Admin]
-    * Get All Users [Public]
+    * Get All Users [Admin]
     * Get User Data Using It's ID [Public]
     * Update User Details Using It's ID [User]
     * Delete User Using It's ID [Admin]
@@ -116,6 +115,7 @@ Live demo (Feel free to visit) 👉 : <a  href="https://shopapi.onrender.com">Sh
 * Product Services
     * Search products using Keywords [Public]
     * Query products using Category [Public]
+    * filter product Products by price, date, popularity[Public]
     * Query Product Using It's ID [Public]
     * Create new product [Seller]
     * Update Product Details [Seller]
@@ -129,12 +129,19 @@ Live demo (Feel free to visit) 👉 : <a  href="https://shopapi.onrender.com">Sh
     * get all Orders [Admin]
 
 * Category Services
-
     * Create New Category [User]
     * Query Categories [Public]
     * Query Category Using It's ID [Public]
     * Update Category Details [Admin]
     * Delete Category [Admin]
+    
+* Address
+    * create Addres[user]
+    * update address[user]
+    * get address[user]
+    
+* payment
+    * verify Payment
 
   
   
@@ -172,8 +179,6 @@ List of any major frameworks used to build the project.
 ## To-do
 
 * manage Product Quanti
-
-* filter product Products by price, date, popularity
 
 * Add Product Color
 
