@@ -25,7 +25,7 @@ router.put("/:id", verifyAdminWithToken, async (req,res) => {
         const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
             $set: req.body
         },{new: true})
-        res.status(200).json(uodateProduct);
+        res.status(200).json({success: true, message: "Product successfully updated"});
     } catch (error) {
         res.status(400).json(error);
     }
@@ -77,11 +77,19 @@ router.get("/allinfo",async (req, res) => {
     const qsort = req.query.sort;
     const qColor = req.query.color;
     const qSize = req.query.size;
+    const qs = req.query.s;
 
     try {
       let query = Product.find()
 
       const filterArr = [];
+      if(qs) filterArr.push({$or: [
+                            {"title": {$regex: qs, $options: "i"}},
+                            {"productno": {$regex: qs, $options: "i"}},
+                            {"desc": {$regex: qs, $options: "i"}},
+                            {"categories": {$in: [qs]}}
+                          ]})
+
       if (qCategory) filterArr.push({ categories: { $in: [qCategory] } });
       if (qColor) filterArr.push({ color: { $in: [qColor] } });
       if (qSize) filterArr.push({ size: { $in: [qSize] } }); 

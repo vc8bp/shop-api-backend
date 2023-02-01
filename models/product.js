@@ -11,7 +11,7 @@ const { Schema } = mongoose;
     size: { type: Array},
     color: { type: Array },
     price: { type: Number, required: true},
-    inStock: { type: Boolean, default: true},
+    quantity: { type: Number, required: true},
     purchasedCount: { type: Number, default: 0},
     ratingsQuantity: {type: Number, default: 0},
     ratingsAverage: { type: Number, default: 0,

@@ -69,7 +69,6 @@ router.post("/login", async (req, res) => {
       //checking if this login req is for admin
       if(req.body.forAdmin) {
         if (!user.isAdmin) {
-          console.log("he is not admin");
           return res.status(401).json({sucess: false,message: "wrong credentials"}) 
         }
       }
@@ -87,7 +86,7 @@ router.post("/login", async (req, res) => {
         id:user._id, 
         isAdmin: user.isAdmin,
 
-      }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.JWT_SECRET_EXPIRE || "3d"});
+      }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.JWT_SECRET_EXPIRE || "3d"}); 
       
       const {password,resetPasswordToken,resetPasswordExpire, ...others} = user._doc
       res.status(200).json({...others, accessToken})
@@ -202,7 +201,7 @@ router.post("/resetpassword/:resetToken", async (req,res) => {
     //validating if this token is valid or not
     const user = await User.findOne({
       resetPasswordToken: hashedresetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() } // gt is mongodb query it means greater then 
+      resetPasswordExpire: { $gt: Date.now() } 
     })
 
     if(!user) return res.status(400).json({ error: "Invalid reset token"});
