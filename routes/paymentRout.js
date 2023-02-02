@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const Razorpay = require("razorpay")
-const dotenv = require("dotenv");
+const dotenv = require("dotenv").config();
 const crypto = require("crypto")
 const Product = require("../models/product");
 const Order = require("../models/order");
@@ -10,7 +10,7 @@ const ConfirmOrders = require("../models/ConfirmOrders");
 const { verifyToken } = require("./tokenVerify");
 const { default: mongoose } = require("mongoose");
 
-dotenv.config();
+
 
 const instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -24,7 +24,12 @@ router.post("/checkout", verifyToken , async (req,res) => {
     console.log(req.body)
 
     if(req.body.type === "product"){ //if req is for single product
-      const dbproduct = await Product.findById(req.body.product.productID,{price: 1, img: 1, title: 1,_id: 0});
+      const dbproduct = await Product.findById(req.body.product.productID,{price: 1, img: 1, title: 1,_id: 0,quantity: 1});
+
+      if(!dbproduct) return res.status(404).json({success: false, message: "Sorry! Unable to find this product."})
+      if(dbproduct.quantity < 1) return res.status(404).json({success: false, message: "Sorry! This products is currently out of stock"})
+      
+
       price = dbproduct.price * req.body.product.quantity;
       req.finalProduct = {...dbproduct._doc, ...req.body.product} //appending dbProduct info with user product info so that i can store the value in db
 

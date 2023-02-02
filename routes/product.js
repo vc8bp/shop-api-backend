@@ -25,7 +25,7 @@ router.put("/:id", verifyAdminWithToken, async (req,res) => {
         const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
             $set: req.body
         },{new: true})
-        res.status(200).json({success: true, message: "Product successfully updated"});
+        res.status(200).json(uodateProduct);
     } catch (error) {
         res.status(400).json(error);
     }

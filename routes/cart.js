@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Cart = require("../models/cart");
+const Product = require("../models/product");
 const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tokenVerify")
 
 //add new product to cart req: login
@@ -8,6 +9,11 @@ router.post("/", verifyToken, async (req, res) => {
     //const newCart = new cart(req.body);
   
     try {
+      // const product = await Product.findOne({productno: req.body.productID})
+      // console.log(product)
+      // if(!product) return res.status(404).json({success: false, message: "Product not found!"})
+      // if(product.quantity < 1) return res.status(404).json({success: false, message: "Sorry! This product is currently unavailable"})
+
       const cart = await Cart.findOne({userID: req.user.id})
 
         //if that user cart exist
