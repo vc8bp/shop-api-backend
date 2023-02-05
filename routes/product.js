@@ -3,6 +3,7 @@ const mongoose  = require("mongoose");
 const { count } = require("../models/product");
 const Product = require("../models/product");
 const {verifyAdminWithToken} = require("./tokenVerify")
+const uploadImage = require('../utils/uploadImage.js')
 
 //add new product req: login
 
@@ -21,11 +22,17 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
 //update products
 router.put("/:id", verifyAdminWithToken, async (req,res) => {
 
+  // const image = await uploadImage(req.body.img);
+  // console.log(image)
+  // if(image.success){
+  //   return res.status(200).json(image.url);
+  // }
+  // res.status(200).json(image.message);
     try {
         const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
             $set: req.body
         },{new: true})
-        res.status(200).json(uodateProduct);
+        
     } catch (error) {
         res.status(400).json(error);
     }
