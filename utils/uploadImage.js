@@ -1,17 +1,19 @@
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config()
+const crypto = require('crypto')
 
 cloudinary.config({
-  cloud_name: "shop",
+  cloud_name: "dofvasjfs",
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-const uploadImageToCloudinary = async (image) => {
+const uploadImageToCloudinary = async (image, name) => {
   try {
     const result = await cloudinary.uploader.upload(image, {
-      resource_type: 'image'
+      public_id: name
     });
+    
     return {
       success: true,
       url: result.secure_url

@@ -21,22 +21,17 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
 
 //update products
 router.put("/:id", verifyAdminWithToken, async (req,res) => {
-
-  // const image = await uploadImage(req.body.img);
-  // console.log(image)
-  // if(image.success){
-  //   return res.status(200).json(image.url);
-  // }
-  // res.status(200).json(image.message);
     try {
+        const image = await uploadImage(req.body.img, req.body._id);
+        req.body.img = image.url;
         const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
             $set: req.body
         },{new: true})
-        
+        res.status(200).json(uodateProduct)
     } catch (error) {
+      console.log(error)
         res.status(400).json(error);
-    }
-    
+    }    
 })
 
 //delete product req:login
@@ -66,11 +61,9 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
       }
         res.status(200).json(savedProducts)
     } catch (err) {
-      console.log("/info/:id Errorrrrrr")
       if(err.name === "CastError"){
         return res.status(404).json("Product not Found");
       }
-      console.log("/info/:id Errorrrrrr")
       console.log(err)
       res.status(500).json({message: "internal server Error"});
     }

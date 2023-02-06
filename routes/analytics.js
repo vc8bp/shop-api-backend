@@ -40,7 +40,7 @@ module.exports = route;
 
 
 
-route.get('/populardimensions', async (req, res) => {
+route.get('/popularsizecolor', async (req, res) => {
     try {
         const results = await Product.aggregate([
             {
