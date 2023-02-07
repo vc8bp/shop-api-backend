@@ -1,6 +1,7 @@
 const Order = require("../models/order");
 const { verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tokenVerify");
-const ConfirmOrders = require('../models/ConfirmOrders.js')
+const ConfirmOrders = require('../models/ConfirmOrders.js');
+const { default: mongoose } = require("mongoose");
 const router = require("express").Router();
 
 //CREATE
@@ -42,27 +43,6 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
   }
 });
 
-//GET USER ORDERS
-router.get("/find/:id", verifyUserWithToken, async (req, res) => {
-  console.log("me runed")
-  try {
-    const orders = await ConfirmOrders.find({ userID: req.user.id }).sort({createdAt: -1});
-    res.status(200).json(orders);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
- 
-// //GET ALL
-
-router.get("/", verifyAdminWithToken, async (req, res) => {
-  try {
-    const orders = await Order.find();
-    res.status(200).json(orders);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 // GET MONTHLY INCOME
 
@@ -92,5 +72,49 @@ router.get("/income", verifyAdminWithToken, async (req, res) => {
     res.status(500).json(err);
   }
 });
+
+
+
+//////////////            CONFIRMED ORDERS         //////////////////////////////////
+
+//GET USER ORDERS
+router.get("/find/:id", verifyUserWithToken, async (req, res) => {
+  console.log("me runed")
+  try {
+    const orders = await ConfirmOrders.find({ userID: req.user.id }).sort({createdAt: -1});
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+ 
+// //GET ALL
+
+router.get("/", verifyAdminWithToken, async (req, res) => {
+  try {
+    const orders = await ConfirmOrders.find();
+    res.status(200).json(orders);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.put("/status/:id", verifyAdminWithToken, async (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
+
+  if(!mongoose.isValidObjectId(id)) return res.status(402).json({message: "order id is not valid"})
+  if(!status) return res.status(402).json({message: "status is requires"})
+
+  try {
+    await ConfirmOrders.findByIdAndUpdate(id, {
+      orderStatus: status
+    });
+    res.status(200).json({message: `order status is successfully updated to ${status}`});
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 
 module.exports = router;

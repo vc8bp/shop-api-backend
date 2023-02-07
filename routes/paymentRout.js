@@ -91,7 +91,11 @@ router.post("/checkout", verifyToken , async (req,res) => {
         type: req.body.type,  // is it cart payment or a single product payment
         products: req.finalProduct || margedProducts,
         price: Number(price.toFixed(2)),
-        address: {address: req.body?.address},
+        userInfo: {
+          address: req.body.userInfo.address,
+          name: req.body.userInfo.name,
+          email: req.body.userInfo.email,
+        },
         order: response,
       })
       res.json({

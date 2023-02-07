@@ -17,7 +17,11 @@ const { Schema } = mongoose;
         }
     ],
     price: {type: Number, required: true},
-    address: {type: Object, required: true},
+    userInfo: {
+      address: {type: Object, required: true},
+      name: {type: String, required: true},
+      email: {type: String, required: true},
+    },   
     order: {type: Object, required: true},
     paymentStatus: {type: Boolean, default: false}
   },{timestamps: true}

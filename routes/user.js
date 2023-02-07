@@ -6,13 +6,12 @@ const { default: mongoose } = require("mongoose");
 
 //UPDATE req: login
 router.put("/:id", verifyUserWithToken, async (req, res) => {
-  console.log("me hit")
   if (req.body.password) {
     req.body.password = await CryptoJS.AES.encrypt(req.body.password,process.env.CRYPTOJS_SECRET_KEY).toString();
   }
   try {
-    await User.findByIdAndUpdate(req.params.id, {$set: req.body}, {new:true});
-    res.status(200).json("user updated successfully");
+    const user = await User.findByIdAndUpdate(req.params.id, {$set: req.body}, {new:true});
+    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({error: "failed to update user"});
     console.log(err)
