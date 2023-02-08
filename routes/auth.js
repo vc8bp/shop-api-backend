@@ -102,12 +102,13 @@ router.post("/login", async (req, res) => {
 
 
 router.post("/forgotpass", async (req, res)=> {
+  const email = req.body.email;
   if(!email) return res.status(400).json({sucess: false,message: "please provide a email"});
 
   const resetToken = crypto.randomBytes(20).toString('hex');
   const hashedresetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   const expireDate = Date.now() + (10 * 60000);
-  const email = req.body.email;
+  
 
   try {
     //finding if user and updating it

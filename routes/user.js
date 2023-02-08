@@ -47,7 +47,7 @@ router.get("/allinfo", verifyAdminWithToken, async (req, res) => {
   limit = req.query.limit;
   search = req.query.s;
   try {
-    let query = User.find()
+    let query = User.find({}, {password: 0})
     let filters = []
 
     if(search) {
@@ -67,7 +67,7 @@ router.get("/allinfo", verifyAdminWithToken, async (req, res) => {
         })    
       }     
     }
-    if(filters.length > 0) query = User.find({ $and: filters})
+    if(filters.length > 0) query = User.find({ $and: filters}, {password: 0})
 
     resUsers = await query.exec();
 
