@@ -6,7 +6,6 @@ const router = require("express").Router()
 
 router.post("/:productid", verifyToken ,async (req, res) => {
     const {review, rating} = req.body;
-    console.log("me runed")
       // 1) Check if user entered all fields
     if(!review && !rating) {
         return res.status(400).json({success: false, message: "All fields ae Required"})

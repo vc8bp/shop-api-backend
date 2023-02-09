@@ -2,6 +2,7 @@ const Order = require("../models/order");
 const { verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tokenVerify");
 const ConfirmOrders = require('../models/ConfirmOrders.js');
 const { default: mongoose } = require("mongoose");
+const product = require("../models/product");
 const router = require("express").Router();
 
 //CREATE
@@ -79,7 +80,6 @@ router.get("/income", verifyAdminWithToken, async (req, res) => {
 
 //GET USER ORDERS
 router.get("/find/:id", verifyUserWithToken, async (req, res) => {
-  console.log("me runed")
   try {
     const orders = await ConfirmOrders.find({ userID: req.user.id }).sort({createdAt: -1});
     res.status(200).json(orders);
@@ -91,10 +91,28 @@ router.get("/find/:id", verifyUserWithToken, async (req, res) => {
 // //GET ALL
 
 router.get("/", verifyAdminWithToken, async (req, res) => {
+  let query = ConfirmOrders.find()
+  const filters = []
+
+  const qsort = req.query.sort;
+  const qstatus= req.query.status;
+  const qsearch = req.query.search;
+
+  if(qsearch && !isNaN(Number(qsearch))) filters.push({"userInfo.address.mobile" : {$eq: Number(qsearch)}})
+  if(qstatus) filters.push({orderStatus: qstatus})
+
+  if(filters.length) query = query.find({$and: filters})
+
+  if (qsort === "price-asc") query.sort({price: 1})
+  else if (qsort === "price-desc") query.sort({price: -1})
+  else if (qsort === "oldest") query.sort({createdAt: 1})
+  else if (qsort === "newest") query.sort({createdAt: -1})
+
   try {
-    const orders = await ConfirmOrders.find();
+    const orders = await query.exec()
     res.status(200).json(orders);
   } catch (err) {
+    console.log(err)
     res.status(500).json(err);
   }
 });
