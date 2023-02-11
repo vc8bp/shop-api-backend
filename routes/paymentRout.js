@@ -112,17 +112,13 @@ router.post("/checkout", verifyToken , async (req,res) => {
 
 router.post("/paymentVerify", async (req,res) => {
   const {razorpay_order_id,razorpay_payment_id,razorpay_signature  } = req.body;
-  console.log(req.body)
   const body = razorpay_order_id + "|" + razorpay_payment_id;
 
   const crypto = require("crypto");
   const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
                                   .update(body.toString())
                                   .digest('hex');
-                                  console.log("sig received " ,razorpay_signature);
-                                  console.log("sig generated " ,expectedSignature);
   if(expectedSignature === razorpay_signature) {
-    //return res.status(200).json({success: true});  
     try {
       const dborder = await Order.findOneAndDelete({"order.id": razorpay_order_id})
       if(!dborder) return res.status(400).json({error: "sesson timeout"})
@@ -141,7 +137,6 @@ router.post("/paymentVerify", async (req,res) => {
             }
           }
         }))
-
         await Product.bulkWrite(updateProduct)
         
 

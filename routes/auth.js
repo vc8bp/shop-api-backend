@@ -122,11 +122,6 @@ router.post("/forgotpass", async (req, res)=> {
     //sending email thing
     const resetURl = `https://satnamcreation.netlify.app/resetpassword/${resetToken}`
     
-    const emailhtml = `
-      <h1>you have requested a password reset</h1>
-      <p>please go tho this link to reset password</p>
-      <a href=${resetURl}>${resetURl}</a>
-    `
     const emailtext = `
       you have requested a password reset
       please go tho this link to reset password

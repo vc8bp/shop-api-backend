@@ -1,7 +1,7 @@
 const Order = require("../models/order");
 const { verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tokenVerify");
 const ConfirmOrders = require('../models/ConfirmOrders.js');
-const { default: mongoose } = require("mongoose");
+const { default: mongoose, mongo } = require("mongoose");
 const product = require("../models/product");
 const router = require("express").Router();
 
@@ -34,15 +34,15 @@ router.put("/:id", verifyAdminWithToken, async (req, res) => {
   }
 });
 
-//DELETE
-router.delete("/:id", verifyAdminWithToken, async (req, res) => {
-  try {
-    await Order.findByIdAndDelete(req.params.id);
-    res.status(200).json("Order has been deleted...");
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
+// //DELETE
+// router.delete("/:id", verifyAdminWithToken, async (req, res) => {
+//   try {
+//     await Order.findByIdAndDelete(req.params.id);
+//     res.status(200).json("Order has been deleted...");
+//   } catch (err) {
+//     res.status(500).json(err);
+//   }
+// });
 
 
 // GET MONTHLY INCOME
@@ -113,7 +113,7 @@ router.get("/", verifyAdminWithToken, async (req, res) => {
     res.status(200).json(orders);
   } catch (err) {
     console.log(err)
-    res.status(500).json(err);
+    res.status(500).json({message: "internal server error"});
   }
 });
 
@@ -130,9 +130,24 @@ router.put("/status/:id", verifyAdminWithToken, async (req, res) => {
     });
     res.status(200).json({message: `order status is successfully updated to ${status}`});
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({message: "internal server error"});
   }
 });
+
+router.get("/:id", async (req, res) => {
+  const id = req.params.id;
+  if(!id) return res.status(401).json({message: "ID required"})
+
+  if(!mongoose.isValidObjectId(id)) return res.status(401).json({message: "ID is not valid"})
+
+  try {
+    const order = await ConfirmOrders.findById(id);
+    res.status(200).json(order);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message: "internal server error"});
+  }
+})
 
 
 module.exports = router;

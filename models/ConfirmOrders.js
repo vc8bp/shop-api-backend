@@ -4,6 +4,7 @@ const { Schema } = mongoose;
   const ConfirmOrderSchema = new Schema({
  
     userID: { type: String, required: true },
+    type: { type: String }, // is it cart payment or a single product payment
     products: [
         {
             title: {type: String},
