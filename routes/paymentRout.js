@@ -141,10 +141,12 @@ router.post("/paymentVerify", async (req,res) => {
         
 
         await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts : { $each : dborder.products.map(p => p._id)}}}) // map used to get only id's of product which are available on order 
-        //await Cart.deleteOne({userID: dborder.userID})   
+        await Cart.deleteOne({userID: dborder.userID})   
       } else {
         const idObject = mongoose.Types.ObjectId(dborder.products[0].productID) //converting in ObjectID
         await User.updateOne({_id: dborder.userID}, {$addToSet: { purchasedProducts :  idObject}})
+
+        await Product.findByIdAndUpdate(dborder.products[0].productID, {$inc: {purchasedCount: dborder.products[0].quantity, quantity: -dborder.products[0].quantity}})
       }
 
     } catch (error) {
