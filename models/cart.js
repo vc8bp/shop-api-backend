@@ -6,7 +6,7 @@ const { Schema } = mongoose;
     userID: { type: String, required: true, unique: true },
     products: [
         {
-            productID: {type: String},
+            productID: {type: mongoose.Types.ObjectId},
             size: { type: String},
             color: { type: String },
             quantity: {type: Number},

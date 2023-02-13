@@ -1,13 +1,20 @@
 const route = require("express").Router()
 const Product = require("../models/product")
 const ConfirmOrder = require("../models/ConfirmOrders")
+
 route.get('/topproducts', async (req, res) => {
+    const condition = req.query.for;
+
+    // i dont need much data if i am getting for charts that's why added conditionaly project and addfeild
+    const project = condition !== "chart" ? {img: 1, title: 1, purchasedCount: 1, price: 1, _id: 0} : {title: 1, purchasedCount: 1, _id: 0}
+    const addField = condition !== "chart" ? {revenue: {$multiply: ["$price", "$purchasedCount"]}} : {}
+
     try {
         const products = await Product.aggregate([
             {$sort: {"purchasedCount": -1}},
             {$limit: 5},
-            {$project: {img: 1, title: 1, purchasedCount: 1, price: 1}},
-            {$addFields: {revenue: {$multiply: ["$price", "$purchasedCount"]}}}
+            {$project: project},
+            {$addFields: addField}
         ])
         res.status(200).json(products)
     } catch (error) {

@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { default: mongoose } = require("mongoose");
 const Cart = require("../models/cart");
 const Product = require("../models/product");
 const {verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tokenVerify")
@@ -18,7 +19,7 @@ router.post("/", verifyToken, async (req, res) => {
 
         //if that user cart exist
         if(cart) {        
-          let itemIndex = cart.products.findIndex(p => p.productID === req.body.products[0].productID);
+          let itemIndex = cart.products.findIndex(p => `${p.productID}` === `${req.body.products[0].productID}`);
           console.log(`dublicate index : ${itemIndex}`)
           
           //if that product axist on cart.
@@ -83,10 +84,17 @@ router.get('/size',verifyToken,async (req, res)=>{
 //update products Quantity in cart
 router.put("/updatequantity/:productNumber/:newQuantity", verifyToken, async (req,res) => {
     try {
-      await Cart.updateOne(
-        {userID: req.user.id, "products.productID": req.params.productNumber},
-        {$set: {"products.$.quantity": req.params.newQuantity}}
-      )
+      if(req.params.newQuantity === "0") {
+        console.log("quantity is 0")
+        await Cart.updateOne({userID: req.user.id},{ $pull: { 'products': {productID: req.params.productNumber}}})
+      } else {
+        console.log("quantity is not 0")
+        await Cart.updateOne(
+          {userID: req.user.id, "products.productID": req.params.productNumber},
+          {$set: {"products.$.quantity": req.params.newQuantity}}
+        )
+      }
+      
       res.status(200).json({status: "success", message: "Product Quantity Updated Successfully"})
     } catch (error) {
       console.log(error)
@@ -118,7 +126,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
           $lookup: {
             from: "products",
             localField: "products.productID",
-            foreignField: "productno",
+            foreignField: "_id",
             as: "productInfo"
           }
         },
@@ -145,7 +153,9 @@ router.delete("/:id", verifyToken, async (req, res) => {
       const [cartt] = cart; //removing array brackets
       const margedProducts = []        
       cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
-        const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
+        const productInfo = cartt.productInfo.find(info => {
+          return `${info._id}` === `${product.productID}` //converted to string because when i was checking === it was cheecking the refrence on the memory not value bcz its an Objectid is an refrence ty[e]
+        });
         margedProducts.push({ ...product, ...productInfo });
       })
   

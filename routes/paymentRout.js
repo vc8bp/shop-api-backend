@@ -21,7 +21,6 @@ router.post("/checkout", verifyToken , async (req,res) => {
     let price = undefined
     let cart = undefined
     const margedProducts = []   
-    console.log(req.body)
 
     if(req.body.type === "product"){ //if req is for single product
       const dbproduct = await Product.findById(req.body.product.productID,{price: 1, img: 1, title: 1,_id: 0,quantity: 1});
@@ -40,7 +39,7 @@ router.post("/checkout", verifyToken , async (req,res) => {
           $lookup: {
             from: "products",
             localField: "products.productID",
-            foreignField: "productno",
+            foreignField: "_id",
             as: "productInfo"
           }
         },
@@ -68,7 +67,7 @@ router.post("/checkout", verifyToken , async (req,res) => {
   
       
       cartt.products.forEach(product => { //murgind user cart product with db product info like price n all whic are dynamic
-        const productInfo = cartt.productInfo.find(info => info.productno === product.productID);
+        const productInfo = cartt.productInfo.find(info => `${info._id}` === `${product.productID}`); //converted to string because when i was checking === it was cheecking the refrence on the memory not value bcz its an Objectid is an refrence ty[e]
         margedProducts.push({ ...product, ...productInfo });
       })
       
@@ -128,7 +127,6 @@ router.post("/paymentVerify", async (req,res) => {
 
       if(dborder.type === "cart"){
 
-        //await Product.updateMany({_id :{$in: productIDS}}, {$inc: {purchasedCount: 1}}) //adding 1 to the purchasedCount in quantity & decrementing quantity
         const updateProduct = dborder.products.map(product => ({
           updateOne: {
             filter: {_id : product.id},
