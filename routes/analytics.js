@@ -49,31 +49,43 @@ module.exports = route;
 
 route.get('/popularsizecolor', async (req, res) => {
     try {
-        const results = await Product.aggregate([
+        const pipeline = [
+
+            { $unwind: "$products" }, 
+            { $group: {
+                _id: { size: "$products.size", color: "$products.color" },
+                count: { $sum: "$products.quantity" }
+            }},
+            { $sort: { count: -1 }},
+            { $project: {
+                _id: 0,
+                size: "$_id.size",
+                color: "$_id.color",
+                count: 1
+            }},
             {
-                $facet: {
-                    sizes: [
-                        {$unwind: "$size"},
-                        {$group: {_id: "$size", count: {$sum: 1}}},
-                        {$sort: {count: -1}},
-                        {$limit: 5},
-                        {$project: {_id: 1, count: 1}}
-                    ],
-                    colors: [
-                        {$unwind: "$color"},
-                        {$group: {_id: "$color", count: {$sum: 1}}},
-                        {$sort: {count: -1}},
-                        {$limit: 5},
-                        {$project: {_id: 1, count: 1}}
-                    ]
-                }
+              $facet: {
+                sizes: [
+                  { $group: { _id: "$size",  count: { $sum: "$count"}}},
+                  { $sort: { count: -1 }},
+                  { $limit: 5 }
+                ],
+                colors: [
+                    { $group: { _id: "$color",  count: { $sum: "$count"}}},
+                    { $sort: { count: -1 }},
+                    { $limit: 5 }
+                ]
+              }
             }
-        ]);
-        res.status(200).json(results);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({message: "internal server error"})
-    }
+          ]
+        
+        const results = await ConfirmOrder.aggregate(pipeline);
+      
+        res.status(200).json(results)
+      } catch (error) {
+        console.error(error);
+      }
+      
 })
 route.get('/order', async (req, res) => {
     try {
