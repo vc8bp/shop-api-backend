@@ -151,3 +151,25 @@ route.get('/orderprice', async (req, res) => {
         res.status(500).json({message: "internal server error"})
     }
 })
+
+route.get('/topcat', async (req, res) => {
+    try {
+        const results = await Product.aggregate([
+            {
+                $group: {
+                    _id: "$categories",
+                    count: {$sum: "$purchasedCount"}
+                }
+            },
+            {$unwind: "$_id"},
+            {$group: {_id: "$_id", count: {$sum: "$count"}}},
+            {$project: {_id: 0, title: "$_id", purchasedCount: "$count"}},
+            {$sort: {"count" : -1}},
+            {$limit: 10}
+        ]);
+        res.status(200).json(results);
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({message: "internal server error"})
+    }
+})
