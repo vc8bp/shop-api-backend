@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const { default: mongoose } = require("mongoose");
+const { findByIdAndUpdate } = require("../models/announcment");
 const Announcments = require("../models/announcment");
 const { verifyAdminWithToken } = require("./tokenVerify");
 
@@ -7,10 +8,8 @@ const { verifyAdminWithToken } = require("./tokenVerify");
 //get announcment
 router.get("/", async (req,res) => {
     try {
-
-        const title = await Announcments.findOne({status: true}).sort({updatedAt: -1});
+        const title = await Announcments.findOne({active: true}).sort({updatedAt: -1});
         res.status(200).json(title); 
-
     } catch (error) {
         console.log(error)
         res.status(400).json({error: "internal servr error"}) 
@@ -18,12 +17,11 @@ router.get("/", async (req,res) => {
     
 })
 
-//add if there is no title or update it
+//add Annoucment
 router.post('/', verifyAdminWithToken, async (req, res) => {
     const title = new Announcments({
-        Title: req.body.title
+        title: req.body.title
     })
-    
     try {
         if (req.body.title?.length > 140) {return res.status(400).json({error: "text length can not be more then 140 charactors"})} 
         title.save()    
@@ -34,36 +32,33 @@ router.post('/', verifyAdminWithToken, async (req, res) => {
     }
     
 });
-//update Status
-router.put('/active/:id', verifyAdminWithToken, async (req, res) => {
-
+//Edit annoucment Status
+router.put('/:id', verifyAdminWithToken, async (req, res) => {
     const { id } = req.params;
-    console.log(id)
-    if(!req.body?.active) return res.status(400).json({message: "active is requires!"})
+    const { title, active} = req.body;
+    console.log(title)
+    if(!JSON.stringify(active) || !title) return res.status(400).json({message: "all feild is requires!"})
     if(!mongoose.isValidObjectId(id)) return res.status(400).json({message: "this is not an valid ID that you provided!"})
 
     try {
-        if(req.body.active === true){ //if req is for activating announcment then check that is there any other active announcment!
-            const checkAlreadyActive = await Announcments.findOne({active: true}, {_id: 1});
-            if(checkAlreadyActive) return res.status(401).json({message: `Already 1 announcment is activated with this ID: ${checkAlreadyActive._id}!`})
+        if(active) {
+            await Announcments.updateMany({$set: {active: false}})
         }
-
-        await Announcments.findByIdAndUpdate(id, {$set :{status: req.body.active}})
-        res.status(200).json({message: `announcment status successfully Updated to ${req.body.active}!`})
+        const ress = await Announcments.findByIdAndUpdate(id, { $set: { title, active } });
+        res.status(200).json({message: `announcment successfully Updated!`})
     } catch (error) {
         console.log(error);
         res.status(500).json({error: "internal erver error"})
     }
     
 });
+
 
 //Disabel all Announcments
-router.delete('/active', verifyAdminWithToken, async (req, res) => {
-
-    
+router.delete('/active', verifyAdminWithToken, async (req, res) => {  
     try {
         const ress = await Announcments.updateMany({active: true}, {$set: {active: false}})
-        res.status(200).json({message: `${ress.modifiedCount} Deactivated successfully!`})
+        res.status(200).json({message: `${ress.modifiedCount} annoucment Deactivated successfully!`})
     } catch (error) {
         console.log(error);
         res.status(500).json({error: "internal erver error"})
@@ -71,15 +66,11 @@ router.delete('/active', verifyAdminWithToken, async (req, res) => {
     
 });
 
-router.delete("/", verifyAdminWithToken, async (req,res) => {
+//get all annoucments
+router.get("/all", verifyAdminWithToken, async (req,res) => {
     try {
-
         const dbAnnouncment = await Announcments.find();
-        if(dbAnnouncment.length === 0) {return res.status(400).json({error: "there is no announcment in db"})};
-
-        await Announcments.deleteOne();
-
-        return res.status(200).json("announcment deleted successfully")
+        return res.status(200).json(dbAnnouncment)
     } catch (error) {
         console.log(error);
         res.status(500).json({error: "internal erver error"}) 
