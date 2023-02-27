@@ -9,6 +9,8 @@ const User = require('../models/user.js')
 const ConfirmOrders = require("../models/ConfirmOrders");
 const { verifyToken } = require("./tokenVerify");
 const { default: mongoose } = require("mongoose");
+const sendEmail = require("../helpers/sendEmail");
+const { createOrderTemplate } = require("../helpers/orderConfrimation");
 
 
 
@@ -16,6 +18,7 @@ const instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
+
 
 router.post("/checkout", verifyToken , async (req,res) => {
     let price = undefined
@@ -83,9 +86,9 @@ router.post("/checkout", verifyToken , async (req,res) => {
         receipt: crypto.randomBytes(15).toString('hex')
       };
     try {
-      const response = await instance.orders.create(options)
-      console.log(response)
-      const dbOrder = await Order.create({
+      const response = await instance.orders.create(options) //razorpay SDK call
+
+      const dbOrder = await Order.create({ // Saving to db
         userID: req.user.id,
         type: req.body.type,  // is it cart payment or a single product payment
         products: req.finalProduct || margedProducts,
@@ -100,13 +103,21 @@ router.post("/checkout", verifyToken , async (req,res) => {
       res.json({
         order:{
           id: response.id,
-          currency: response.currency,
           amount: response.amount
         }
+      })
+
+      const emailTemplate = createOrderTemplate(dbOrder)
+      sendEmail({
+        to: dbOrder.userInfo.email,
+        subject: "Order Confirmation",
+        emailhtml : emailTemplate
       })
     } catch (error) {
       console.log(error)
     }
+
+    
 })
 
 router.post("/paymentVerify", async (req,res) => {
@@ -159,7 +170,7 @@ router.post("/paymentVerify", async (req,res) => {
 })
 
 router.get("/getKey", async (req,res) =>{
-      return res.status(200).json({key:process.env.RAZORPAY_KEY_ID})
+  return res.status(200).json({key:process.env.RAZORPAY_KEY_ID})
 })
 
 module.exports = router

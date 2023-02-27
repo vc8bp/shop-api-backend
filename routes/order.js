@@ -3,6 +3,8 @@ const { verifyAdminWithToken, verifyToken, verifyUserWithToken} = require("./tok
 const ConfirmOrders = require('../models/ConfirmOrders.js');
 const { default: mongoose, mongo } = require("mongoose");
 const product = require("../models/product");
+const {createOrderTemplate} = require("../helpers/orderConfrimation");
+const sendEmail = require("../helpers/sendEmail");
 const router = require("express").Router();
 
 //CREATE
@@ -17,7 +19,7 @@ router.post("/", verifyToken, async (req, res) => {
     res.status(500).json(err);
   }
 });
-
+ 
 //UPDATE
 router.put("/:id", verifyAdminWithToken, async (req, res) => {
   try {
@@ -44,35 +46,6 @@ router.put("/:id", verifyAdminWithToken, async (req, res) => {
 //   }
 // });
 
-
-// GET MONTHLY INCOME
-
-router.get("/income", verifyAdminWithToken, async (req, res) => {
-  const date = new Date();
-  const lastMonth = new Date(date.setMonth(date.getMonth() - 1));
-  const previousMonth = new Date(new Date().setMonth(lastMonth.getMonth() - 1));
-
-  try {
-    const income = await Order.aggregate([
-      { $match: { createdAt: { $gte: previousMonth } } },
-      {
-        $project: {
-          month: { $month: "$createdAt" },
-          sales: "$amount",
-        },
-      },
-      {
-        $group: {
-          _id: "$month",
-          total: { $sum: "$sales" },
-        },
-      },
-    ]);
-    res.status(200).json(income);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 
 
@@ -125,11 +98,19 @@ router.put("/status/:id", verifyAdminWithToken, async (req, res) => {
   if(!status) return res.status(402).json({message: "status is requires"})
 
   try {
-    await ConfirmOrders.findByIdAndUpdate(id, {
-      orderStatus: status
-    });
+    const order = await ConfirmOrders.findByIdAndUpdate(id, {orderStatus: status}, {new: true});
+    const emailHTML = createOrderTemplate(order)
+
+    sendEmail({
+      to: order.userInfo.email,
+      subject: "Order Confirmation",
+      emailhtml: emailHTML,
+      emailtext: emailHTML
+    })
+
     res.status(200).json({message: `order status is successfully updated to ${status}`});
   } catch (err) {
+    console.log(err)
     res.status(500).json({message: "internal server error"});
   }
 });

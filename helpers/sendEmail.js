@@ -19,7 +19,7 @@ const sendEmail = (options) => {
     to: options.to,
     subject: options.subject,
     html: options.emailhtml,
-    text: options.emailtext,
+    text: options?.emailtext || options.emailhtml,
   };
 
   transporter.sendMail(mailOptions,  (err, info) => {
