@@ -70,6 +70,7 @@ router.get("/", verifyAdminWithToken, async (req, res) => {
   const qsort = req.query.sort;
   const qstatus= req.query.status;
   const qsearch = req.query.search;
+  
 
   if(qsearch && !isNaN(Number(qsearch))) filters.push({"userInfo.address.mobile" : {$eq: Number(qsearch)}})
   if(qstatus) filters.push({orderStatus: qstatus})
@@ -79,7 +80,7 @@ router.get("/", verifyAdminWithToken, async (req, res) => {
   if (qsort === "price-asc") query.sort({price: 1})
   else if (qsort === "price-desc") query.sort({price: -1})
   else if (qsort === "oldest") query.sort({createdAt: 1})
-  else if (qsort === "newest") query.sort({createdAt: -1})
+  else if (qsort === "newest" ) query.sort({createdAt: -1})
 
   try {
     const orders = await query.exec()

@@ -77,4 +77,18 @@ router.get("/all", verifyAdminWithToken, async (req,res) => {
     }
 })
 
+router.delete("/:id", async (req, res) => {
+    const id = req.params.id;
+    if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({message: `${id} is not valid ID`})
+    }
+    try {
+        const ress = await Announcments.findByIdAndDelete(id);
+        res.status(200).json({message: "annoucment updated successfully"})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "internal erver error"}) 
+    }
+})
+
 module.exports = router;
