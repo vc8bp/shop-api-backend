@@ -15,7 +15,14 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
       const savedProduct = await newProduct.save();
       res.status(200).json(savedProduct);
     } catch (err) {
-      res.status(500).json(err);
+      if (err.name === "ValidationError") {
+        if (err.name == 'ValidationError') {
+          for (field in err.errors) {
+            return res.status(400).json({sucess: false,message: err.errors[field].message}); 
+          }
+        }
+      }
+      return res.status(500).json({message: "internal server Error"});
     }
   });
 
@@ -103,6 +110,12 @@ router.get("/allinfo",async (req, res) => {
         query.sort({ price : 1})
       } else if (qsort === "price-desc") {
         query.sort({ price : -1})
+      } else if (qsort === "toppurchased") {
+        query.sort({ purchasedCount : -1})
+      } else if (qsort === "topRated") {
+        query.sort({ ratingsAverage : -1, ratingsQuantity: -1 })
+      } else if (qsort === "topreviewed"){
+        query.sort({ ratingsQuantity: -1 })
       }
       query.skip(startIndex).limit(limit)
       const products = await query.exec()
