@@ -65,7 +65,7 @@ router.post("/checkout", verifyToken , async (req,res) => {
       const [cartt] = cart;//removing array brackets
 
       if(!cartt) {
-        return res.status(404).json("no products found on your cart")
+        return res.status(404).json({message: "no products found on your cart"})
       }
   
       

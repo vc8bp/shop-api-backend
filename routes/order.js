@@ -64,7 +64,10 @@ router.get("/find/:id", verifyUserWithToken, async (req, res) => {
 // //GET ALL
 
 router.get("/", verifyAdminWithToken, async (req, res) => {
-  let query = ConfirmOrders.find()
+  const {page = 1, limit = 10} = req.query;
+  const startIndex = (page - 1) * limit;
+  const FeildsIWant = {createdAt: 1, userInfo: 1, price: 1, orderStatus: 1}
+  let query = ConfirmOrders.find({},FeildsIWant)
   const filters = []
 
   const qsort = req.query.sort;
@@ -82,8 +85,10 @@ router.get("/", verifyAdminWithToken, async (req, res) => {
   else if (qsort === "oldest") query.sort({createdAt: 1})
   else if (qsort === "newest" ) query.sort({createdAt: -1})
 
+
   try {
-    const orders = await query.exec()
+    const orders = await query.skip(startIndex).limit(limit).exec()
+    if(orders.length < 1) return res.status(404).json({message: "No Products Found"});
     res.status(200).json(orders);
   } catch (err) {
     console.log(err)

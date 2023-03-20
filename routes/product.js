@@ -3,16 +3,16 @@ const mongoose  = require("mongoose");
 const { count } = require("../models/product");
 const Product = require("../models/product");
 const {verifyAdminWithToken} = require("./tokenVerify")
-const uploadImage = require('../utils/uploadImage.js')
+const {uploadImageToCloudinary, deleteImageFromCloudinary} = require('../utils/cloudinaryMethods.js')
 
 //add new product req: login
-
 router.post("/", verifyAdminWithToken, async (req, res) => {
-    const newProduct = new Product(req.body);
-          //BUG
-    //crate index of product no work left to do
+    const id = mongoose.Types.ObjectId()
+    console.log(id)
     try {
-      const savedProduct = await newProduct.save();
+      const image = await uploadImageToCloudinary(req.body.img, id);
+      req.body.img = image.url;
+      const savedProduct = await Product.create({...req.body, _id: id})
       res.status(200).json(savedProduct);
     } catch (err) {
       if (err.name === "ValidationError") {
@@ -21,6 +21,10 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
             return res.status(400).json({sucess: false,message: err.errors[field].message}); 
           }
         }
+      } 
+      if(err.code === 11000){
+        const dublicate = Object.keys(err.keyPattern)[0];
+        return res.status(400).json({message: `A product already exist with the same ${dublicate}`}); 
       }
       return res.status(500).json({message: "internal server Error"});
     }
@@ -29,7 +33,7 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
 //update products
 router.put("/:id", verifyAdminWithToken, async (req,res) => {
     try {
-        const image = await uploadImage(req.body.img, req.body._id);
+        const image = await uploadImageToCloudinary(req.body.img, req.body._id);
         req.body.img = image.url;
         const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
             $set: req.body
@@ -43,12 +47,14 @@ router.put("/:id", verifyAdminWithToken, async (req,res) => {
 
 //delete product req:login
 router.delete("/:id", verifyAdminWithToken, async (req, res) => {
-  
+  const id = req.params.id;
+  if(!mongoose.isValidObjectId(id)) return res.status(403).json({message: "The product you provided is not a vaid id"})
     try {
-      await Product.findByIdAndDelete(req.params.id);
-      res.status(200).json("product deleted")
+      await Product.findByIdAndDelete(id);
+      const result = await deleteImageFromCloudinary(id)
+      res.status(200).json({message: "product deleted Succesfully"})
     } catch (err) {
-      res.status(500).json(err);
+      res.status(500).json({message: "failed to delete product"});
     }
   });
   
@@ -64,14 +70,10 @@ router.delete("/:id", verifyAdminWithToken, async (req, res) => {
     try {
       const savedProducts = await Product.findById(req.params.id);
       if(!savedProducts) {
-        return res.status(404).json("Product not Foundd");
+        return res.status(404).json({message: "Product not Foundd"});
       }
         res.status(200).json(savedProducts)
     } catch (err) {
-      if(err.name === "CastError"){
-        return res.status(404).json("Product not Found");
-      }
-      console.log(err)
       res.status(500).json({message: "internal server Error"});
     }
   });
@@ -118,7 +120,10 @@ router.get("/allinfo",async (req, res) => {
         query.sort({ ratingsQuantity: -1 })
       }
       query.skip(startIndex).limit(limit)
+
       const products = await query.exec()
+
+      if(products.length < 1) return res.status(404).json({message: "No more product Found!" });
       
       res.status(200).json(products);
       

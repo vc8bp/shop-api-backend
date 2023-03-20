@@ -25,7 +25,18 @@ const uploadImageToCloudinary = async (image, name) => {
   }
 };
 
-module.exports = uploadImageToCloudinary;
+const deleteImageFromCloudinary = async (name) => {
+  try {
+    const result = await cloudinary.uploader.destroy(name)
+    console.log(result)
+    return {success: true}
+  } catch (error) {
+    console.log(error)
+    return {success: false, error: error}
+  }
+}
+
+module.exports = {uploadImageToCloudinary, deleteImageFromCloudinary};
 
 
 

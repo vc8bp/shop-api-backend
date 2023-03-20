@@ -1,26 +1,26 @@
 const router = require("express").Router();
 const User = require("../models/user");
-const {verifyUserWithToken, verifyAdminWithToken} = require("./tokenVerify")
+const { verifyUserWithToken, verifyAdminWithToken } = require("./tokenVerify")
 const CryptoJS = require("crypto-js");
 const { default: mongoose } = require("mongoose");
 
 //UPDATE req: login
 router.put("/:id", verifyUserWithToken, async (req, res) => {
   if (req.body.password) {
-    req.body.password = await CryptoJS.AES.encrypt(req.body.password,process.env.CRYPTOJS_SECRET_KEY).toString();
+    req.body.password = await CryptoJS.AES.encrypt(req.body.password, process.env.CRYPTOJS_SECRET_KEY).toString();
   }
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, {$set: req.body}, {new:true});
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
     res.status(200).json(user);
   } catch (err) {
-    res.status(500).json({error: "failed to update user"});
+    res.status(500).json({ error: "failed to update user" });
     console.log(err)
   }
 });
 
 //delete user req:login
 router.delete("/:id", verifyUserWithToken, async (req, res) => {
-  
+
   try {
     await User.findByIdAndDelete(req.params.id);
     res.status(200).json("user deleted")
@@ -33,7 +33,7 @@ router.delete("/:id", verifyUserWithToken, async (req, res) => {
 
 //get specific user info, req:admin login
 router.get("/info/:id", verifyAdminWithToken, async (req, res) => {
-  
+
   try {
     const suser = await User.findById(req.params.id);
     res.status(200).json(suser)
@@ -47,27 +47,26 @@ router.get("/allinfo", verifyAdminWithToken, async (req, res) => {
   limit = req.query.limit;
   search = req.query.s;
   try {
-    let query = User.find({}, {password: 0})
+    let query = User.find({}, { password: 0 })
     let filters = []
 
-    if(search) {
-      if(mongoose.isValidObjectId(search)) {
-        console.log("it is id")
-        filters.push({_id: mongoose.Types.ObjectId(search)})
-      } else {
-        console.log("it is not id")
+    if (search) {
+      if (mongoose.isValidObjectId(search)) {
+        
+        filters.push({ _id: mongoose.Types.ObjectId(search) })
+
+      } else if(isNaN(search)) {
         filters.push({
-          
           $or: [
-            {"firstName": {$regex: search, $options: "i"}},
-            {"lastName": {$regex: search, $options: "i"}},
-            {"email": {$regex: search, $options: "i"}},
-            {"number" : {$eq : Number(search)}}
+            { "firstName": { $regex: search, $options: "i" } },
+            { "lastName": { $regex: search, $options: "i" } },
+            { "email": { $regex: search, $options: "i" } },
           ]
-        })    
-      }     
+        })
+      } else filters.push({ "number": { $eq: Number(search) } })
+
     }
-    if(filters.length > 0) query = User.find({ $and: filters}, {password: 0})
+    if (filters.length > 0) query = User.find({ $and: filters }, { password: 0 })
 
     resUsers = await query.exec();
 
