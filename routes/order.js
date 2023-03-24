@@ -85,7 +85,6 @@ router.get("/", verifyAdminWithToken, async (req, res) => {
   else if (qsort === "oldest") query.sort({createdAt: 1})
   else if (qsort === "newest" ) query.sort({createdAt: -1})
 
-
   try {
     const orders = await query.skip(startIndex).limit(limit).exec()
     if(orders.length < 1) return res.status(404).json({message: "No Products Found"});
