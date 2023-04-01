@@ -31,6 +31,9 @@ route.post("/", verifyToken ,async (req, res) => {
         })
         return res.status(200).json({ok: true, address})
     } catch (error) {
+        if(error.code = 11000){
+            return res.status(500).json({ok: false, message: "We already have your Address in our system"})
+        }
         console.log(error)
         return res.status(500).json({ok: false, message: "internal server error"})
     }

@@ -8,6 +8,7 @@ cloudinary.config({
 })
 
 const uploadImageToCloudinary = async (image, name) => {
+  console.log("me runed")
   try {
     const result = await cloudinary.uploader.upload(image, {
       public_id: name

@@ -33,12 +33,15 @@ router.post("/", verifyAdminWithToken, async (req, res) => {
 //update products
 router.put("/:id", verifyAdminWithToken, async (req,res) => {
     try {
+      if(req.body.img.split("/")[0] === "data:image"){
         const image = await uploadImageToCloudinary(req.body.img, req.body._id);
+        console.log(image)
         req.body.img = image.url;
-        const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
-            $set: req.body
-        },{new: true})
-        res.status(200).json(uodateProduct)
+      }
+      const uodateProduct = await Product.findByIdAndUpdate(req.params.id, {
+          $set: req.body
+      },{new: true})
+      res.status(200).json(uodateProduct)
     } catch (error) {
       console.log(error)
         res.status(400).json(error);
@@ -115,7 +118,7 @@ router.get("/allinfo",async (req, res) => {
       } else if (qsort === "toppurchased") {
         query.sort({ purchasedCount : -1})
       } else if (qsort === "topRated") {
-        query.sort({ ratingsAverage : -1, ratingsQuantity: -1 })
+        query.sort({ ratingsQuantity: -1, ratingsAverage : -1 })
       } else if (qsort === "topreviewed"){
         query.sort({ ratingsQuantity: -1 })
       }
