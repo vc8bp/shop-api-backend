@@ -3,19 +3,29 @@ const User = require("../models/user");
 const { verifyUserWithToken, verifyAdminWithToken } = require("./tokenVerify")
 const CryptoJS = require("crypto-js");
 const { default: mongoose } = require("mongoose");
+const { decreptPass, encreptPass } = require("../utils/pass");
+
+
 
 //UPDATE req: login
 router.put("/:id", verifyUserWithToken, async (req, res) => {
-  if (req.body.password) {
-    req.body.password = await CryptoJS.AES.encrypt(req.body.password, process.env.CRYPTOJS_SECRET_KEY).toString();
-  }
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
-    res.status(200).json(user);
-  } catch (err) {
-    res.status(500).json({ error: "failed to update user" });
-    console.log(err)
-  }
+    try {
+        console.log("me hit")
+        if (req.body.password) {
+            if(!req.body.currentPass) return res.status(400).json({ error: "Old password Is Reuired!!" });
+            const oldDbPass = await User.findById(req.user.id, {password: 1, _id: 0})
+            const decreptedOldPass = decreptPass(oldDbPass.password)
+
+            if(decreptedOldPass !== req.body.currentPass) return res.status(401).json({ error: "Old password dosent matched!!" });
+            req.body.password = encreptPass(req.body.password)
+        }
+        const user = await User.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+        console.log("me hit3")
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ error: "failed to update user" });
+        console.log(err)
+    }
 });
 
 //delete user req:login
